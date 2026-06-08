@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JS 事件循环与 DOM 示例</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <h1>JS 事件循环与 DOM 示例</h1>
+
+      <section class="controls" aria-label="示例按钮">
+        <button id="run-event-loop">运行事件循环示例</button>
+        <button id="run-closure">运行闭包示例</button>
+        <button id="add-task">添加 DOM 节点</button>
+        <button id="clear-log">清空日志</button>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>日志</h2>
+          <ol id="log"></ol>
+        </div>
+
+        <div class="panel">
+          <h2>任务列表</h2>
+          <ul id="tasks"></ul>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

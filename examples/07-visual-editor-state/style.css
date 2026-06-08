@@ -1,0 +1,120 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #17202a;
+  background: #f5f7fb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.page {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0;
+}
+
+h1 {
+  margin: 0 0 18px;
+  font-size: 28px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid #b7c3d4;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.active {
+  border-color: #1f6feb;
+  color: #ffffff;
+  background: #1f6feb;
+}
+
+.editor {
+  position: relative;
+  height: 460px;
+  overflow: hidden;
+  border: 1px solid #cdd8e6;
+  border-radius: 8px;
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(#eef2f7 1px, transparent 1px),
+    linear-gradient(90deg, #eef2f7 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.edges,
+.nodes {
+  position: absolute;
+  inset: 0;
+}
+
+.edges {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.edge {
+  fill: none;
+  stroke: #526070;
+  stroke-width: 2;
+}
+
+.node {
+  position: absolute;
+  width: 150px;
+  min-height: 72px;
+  border: 1px solid #9fb0c7;
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(23, 32, 42, 0.10);
+  cursor: grab;
+  user-select: none;
+}
+
+.node.selected {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.18);
+}
+
+.node.connect-source {
+  border-color: #148a4d;
+}
+
+.node h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.node p {
+  margin: 0;
+  color: #526070;
+  font-size: 13px;
+}
+
+#output {
+  width: 100%;
+  min-height: 170px;
+  margin-top: 12px;
+  border: 1px solid #cdd8e6;
+  border-radius: 8px;
+  padding: 12px;
+  color: #dbeafe;
+  background: #111827;
+  font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

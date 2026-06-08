@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AIGC Workflow 调度模拟示例</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <h1>AIGC Workflow 调度模拟示例</h1>
+
+      <section class="controls">
+        <button id="run">运行 workflow</button>
+        <button id="cancel">取消</button>
+        <label>
+          <input id="fail-upscale" type="checkbox">
+          模拟 upscale 节点失败
+        </label>
+      </section>
+
+      <section id="nodes" class="nodes" aria-label="节点状态"></section>
+
+      <section class="panel">
+        <h2>运行日志</h2>
+        <ol id="log"></ol>
+      </section>
+    </main>
+  </body>
+</html>

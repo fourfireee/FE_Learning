@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>浏览器渲染与性能示例</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <h1>浏览器渲染与性能示例</h1>
+
+      <section class="controls">
+        <button id="bad-layout">读写交错</button>
+        <button id="batched-layout">先读后写</button>
+        <button id="toggle-animation">启动 rAF 动画</button>
+      </section>
+
+      <p id="stats" class="stats">等待操作</p>
+
+      <section class="stage" aria-label="动画区域">
+        <div id="runner" class="runner"></div>
+      </section>
+
+      <section id="bars" class="bars" aria-label="布局测试条"></section>
+    </main>
+  </body>
+</html>

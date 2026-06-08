@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CSS 布局与动画示例</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <main class="workspace">
+      <aside class="sidebar">
+        <h1>CSS 示例</h1>
+        <button>选择</button>
+        <button>移动</button>
+        <button>连线</button>
+      </aside>
+
+      <section class="content" aria-label="布局面板">
+        <div class="toolbar">
+          <span>Flex 工具栏</span>
+          <button>保存</button>
+        </div>
+
+        <div class="card-grid">
+          <article class="card">
+            <h2>盒模型</h2>
+            <p>padding、border、margin 一起决定元素占用的空间。</p>
+          </article>
+          <article class="card">
+            <h2>Grid</h2>
+            <p>Grid 适合二维布局，比如这个卡片区域。</p>
+          </article>
+          <article class="card moving-card">
+            <h2>动画</h2>
+            <p>这个卡片只动画 transform，通常比动画 top / left 更稳。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

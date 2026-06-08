@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>最小可视化编辑器示例</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <h1>最小可视化编辑器示例</h1>
+
+      <section class="toolbar">
+        <button id="add-node">添加节点</button>
+        <button id="connect-mode">连线模式</button>
+        <button id="undo">撤销</button>
+        <button id="redo">重做</button>
+        <button id="serialize">序列化</button>
+      </section>
+
+      <section id="editor" class="editor" aria-label="节点编辑器">
+        <svg id="edges" class="edges"></svg>
+        <div id="nodes" class="nodes"></div>
+      </section>
+
+      <textarea id="output" readonly aria-label="序列化结果"></textarea>
+    </main>
+  </body>
+</html>

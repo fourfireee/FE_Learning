@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Canvas / WebGL 灰度滤镜示例</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <h1>Canvas / WebGL 灰度滤镜示例</h1>
+
+      <section class="controls">
+        <label>
+          灰度强度
+          <input id="strength" type="range" min="0" max="100" value="100">
+        </label>
+        <button id="redraw">重新生成输入图</button>
+      </section>
+
+      <section class="canvases">
+        <div>
+          <h2>Canvas 生成的输入图</h2>
+          <canvas id="source"></canvas>
+        </div>
+        <div>
+          <h2>WebGL shader 输出</h2>
+          <canvas id="gl-canvas"></canvas>
+        </div>
+      </section>
+
+      <p id="message" class="message"></p>
+    </main>
+  </body>
+</html>
