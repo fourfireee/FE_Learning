@@ -1,7 +1,7 @@
 # CSS 基础必备知识
 
-- CSS 负责描述页面长什么样。
-- 浏览器会把 CSS 解析成 CSSOM，然后结合 DOM 计算每个元素的最终样式。
+- CSS（Cascading Style Sheets，层叠样式表）负责描述页面长什么样。
+- 浏览器会把 CSS 解析成 CSSOM（CSS Object Model，CSS 对象模型），然后结合 DOM（Document Object Model，文档对象模型）计算每个元素的最终样式。
 - CSS 的计算结果会继续参与 layout、paint、composite。
 
 ```mermaid
@@ -48,6 +48,8 @@ flowchart LR
     - Flex 适合一维布局，比如一行工具栏、一列按钮。
     - Grid 适合二维布局，比如面板、卡片网格、复杂页面结构。
     - 绝对定位适合局部浮层、节点编辑器里的节点位置。
+- Flex 是 Flexible Box Layout 的简称，核心是沿着一条主轴排列元素。
+- Grid 是 CSS Grid Layout 的简称，核心是先划分行和列，再把元素放进格子里。
 
 - 动画：
     - 优先动画 `transform` 和 `opacity`。

@@ -1,6 +1,6 @@
 # AIGC Workflow 与任务调度
 
-- AIGC workflow 本质上是一张图。
+- AIGC 是 AI Generated Content，人工智能生成内容。AIGC workflow 本质上是一张图。
 - 节点表示一个处理步骤。
 - 边表示数据依赖。
 - 调度器要根据依赖关系决定哪些节点可以运行、什么时候运行、失败后怎么处理。
@@ -25,6 +25,7 @@ type WorkflowEdge = {
 ```
 
 - DAG：
+    - DAG 是 Directed Acyclic Graph，有向无环图。
     - workflow 通常应该是有向无环图。
     - 有向表示数据有流向。
     - 无环表示不能出现 A 依赖 B，B 又依赖 A。
@@ -51,10 +52,10 @@ flowchart TD
     - `cancelled`：被取消。
 
 - 模型服务调用方式：
-    - REST：适合短请求，或者提交任务。
+    - REST 是 Representational State Transfer，表现层状态转移。这里可以简单理解成用 HTTP 接口操作资源，适合短请求，或者提交任务。
     - 轮询：适合任务提交后定期查询结果。
-    - SSE：适合服务端持续推送进度。
-    - WebSocket：适合双向实时通信。
+    - SSE 是 Server-Sent Events，服务端事件推送。它适合服务端持续推送进度。
+    - WebSocket 是浏览器和服务器之间的一条长连接，适合双向实时通信。
 
 - 任务控制：
     - 取消：用户不想等了，或者参数已改变。

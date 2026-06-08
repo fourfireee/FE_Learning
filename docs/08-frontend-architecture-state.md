@@ -5,23 +5,23 @@
 
 - 常见状态类型：
     - 组件本地状态：只被一个组件使用，比如输入框是否展开。
-    - 全局 UI 状态：多个组件共享，比如当前选中的节点。
-    - URL 状态：可以通过链接复现，比如当前 tab、搜索条件。
+    - 全局 UI（User Interface，用户界面）状态：多个组件共享，比如当前选中的节点。
+    - URL（Uniform Resource Locator，统一资源定位符）状态：可以通过链接复现，比如当前 tab、搜索条件。
     - 服务端状态：来自接口的数据，比如 workflow 列表、模型列表。
     - 临时交互状态：拖拽中、框选中、连线中。
 
 - 状态放置原则：
     - 谁需要读，状态就放在它们共同的最近上层。
     - 能由已有数据算出来的，不要重复存。
-    - 需要持久化的状态要有明确 schema。
+    - 需要持久化的状态要有明确 schema。schema 是数据结构约定，说明一个文件或对象应该有哪些字段、字段是什么类型。
     - 临时状态不要污染正式业务数据。
 
 - 编辑器状态可以拆成：
-    - document state：节点、边、参数。
-    - selection state：当前选中什么。
-    - viewport state：缩放、平移。
-    - interaction state：正在拖拽、正在连线。
-    - history state：undo / redo 栈。
+    - document state：文档状态，保存节点、边、参数。
+    - selection state：选择状态，保存当前选中什么。
+    - viewport state：视口状态，保存缩放、平移。
+    - interaction state：交互状态，保存正在拖拽、正在连线。
+    - history state：历史状态，保存 undo / redo 栈。
 
 - undo / redo 的几种方式：
     - command 模式：记录每次操作和它的反操作。

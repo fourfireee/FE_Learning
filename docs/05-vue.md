@@ -1,6 +1,6 @@
 # Vue 基础必备知识
 
-- Vue 的核心思想也是：UI 是状态的结果。
+- Vue 的核心思想也是：UI（User Interface，用户界面）是状态的结果。
 - Vue 更强调模板和响应式数据。
 - 当响应式数据变化时，Vue 会找到依赖这些数据的视图并更新。
 
@@ -46,4 +46,4 @@ Vue.watch(total, (next) => {
 
 - 可运行示例：
     - [Vue 响应式与 computed 示例](../examples/09-vue-reactivity-cdn/index.html)
-    - 这个示例使用 CDN 版本 Vue，浏览器需要能访问外部 CDN。
+    - 这个示例使用 CDN（Content Delivery Network，内容分发网络）版本 Vue，浏览器需要能访问外部 CDN。

@@ -1,15 +1,15 @@
 # HTML 基础必备知识
 
-- HTML 负责描述页面的结构。
-- 浏览器拿到 HTML 文本后，会把字符串解析成一棵 DOM 树。
-- DOM 树里的每个节点都是一个对象，后续 CSS、JavaScript、事件系统都会围绕这些对象工作。
+- HTML（HyperText Markup Language，超文本标记语言）负责描述页面的结构。
+- 浏览器拿到 HTML 文本后，会把字符串解析成一棵 DOM（Document Object Model，文档对象模型）树。
+- DOM 树里的每个节点都是一个对象，后续 CSS（Cascading Style Sheets，层叠样式表）、JavaScript、事件系统都会围绕这些对象工作。
 
 ```mermaid
 flowchart LR
     A["HTML 字符串"] --> B["解析标签和文本"]
     B --> C["生成 DOM 节点"]
     C --> D["组成 DOM 树"]
-    D --> E["给 CSS 和 JS 使用"]
+    D --> E["给 CSS 和 JavaScript 使用"]
 ```
 
 - 最重要的心智模型：
@@ -19,9 +19,9 @@ flowchart LR
     - 行为交给 JavaScript。
 
 - 常用结构：
-    - `header`：页面或区域的头部。
-    - `main`：页面主要内容。
-    - `section`：一块有主题的内容。
+    - `header`：页面或区域的头部，比如工具顶部栏。
+    - `main`：页面主要内容，一个页面通常只有一个。
+    - `section`：一块有主题的内容，比如参数面板。
     - `article`：一段可以独立理解的内容。
     - `nav`：导航。
     - `form`：表单。

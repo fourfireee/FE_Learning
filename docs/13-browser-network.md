@@ -4,22 +4,22 @@
 - 这一篇讲第二件事：浏览器是怎么发请求、拿响应、存数据的。
 - 对你的项目来说，调度模型服务、上传图片、下载结果，全都建立在这套机制上。
 
-## HTTP 是什么
+- HTTP 是什么：
 
-- HTTP 是浏览器和服务器之间的一问一答协议。
+- HTTP 是 HyperText Transfer Protocol，超文本传输协议，是浏览器和服务器之间的一问一答协议。
 - 浏览器发出一个 request，服务器返回一个 response，一次往返结束。
 - HTTP 本身是无状态的：服务器默认不记得你上一次问过什么，状态要靠 Cookie / Token 额外携带。
 
 - 一个 request 由四部分组成：
-    - method：想做什么（GET 读、POST 新建、PUT 整体更新、PATCH 局部更新、DELETE 删除）。
-    - URL：资源在哪。
+    - method：请求方法，表示想做什么（GET 读、POST 新建、PUT 整体更新、PATCH 局部更新、DELETE 删除）。
+    - URL：Uniform Resource Locator，统一资源定位符，表示资源在哪。
     - headers：附加说明，比如内容类型、身份凭证。
     - body：要发送的数据（GET 通常没有 body）。
 
 - 一个 response 也有对应结构：
-    - status code：这次请求的结果（见下）。
+    - status code：状态码，表示这次请求的结果。
     - headers：响应的附加说明，比如缓存策略、内容类型。
-    - body：返回的数据，通常是 JSON、图片或文件流。
+    - body：返回的数据，通常是 JSON、图片或文件流。JSON 是 JavaScript Object Notation，一种常用的数据交换格式。
 
 ```mermaid
 flowchart LR
@@ -29,14 +29,15 @@ flowchart LR
     D --> E["浏览器解析 response"]
 ```
 
-## HTTPS 和 HTTP 的区别
+- HTTPS 和 HTTP 的区别：
 
-- HTTPS 就是 HTTP 加一层 TLS 加密。
+- HTTPS 是 HTTP Secure，安全的 HTTP，可以理解成 HTTP 加一层 TLS 加密。
+- TLS 是 Transport Layer Security，传输层安全协议，用来加密通信并验证服务器身份。
 - 它解决三个问题：内容不被中间人偷看、内容不被篡改、确认你连的确实是目标服务器。
-- 对前端而言，绝大多数线上接口、CDN、第三方模型服务都要求 HTTPS。
+- 对前端而言，绝大多数线上接口、CDN（Content Delivery Network，内容分发网络）、第三方模型服务都要求 HTTPS。
 - 一个常见坑：HTTPS 页面里发 HTTP 请求会被浏览器拦截（混合内容），所以接口和页面要同协议。
 
-## 状态码
+- 状态码：
 
 - 状态码是服务器对这次请求的分类回答，记大类即可。
     - 2xx 成功：200 正常，201 已创建，204 成功但无内容。
@@ -45,7 +46,7 @@ flowchart LR
     - 5xx 服务端错：500 服务器内部错，502/503/504 网关或服务不可用。
 - 判断问题方向的快捷法：4xx 多半是前端请求本身的问题，5xx 多半是后端的问题。
 
-## 缓存
+- 缓存：
 
 - 缓存的目的是让浏览器尽量不重复下载没变的资源。
 - 分两种思路：强缓存和协商缓存。
@@ -71,28 +72,30 @@ flowchart TD
 ```
 
 - 实践中的常见策略：
-    - 带 hash 的 JS / CSS（如 `app.3f9c.js`）可以长期强缓存，因为内容一变文件名就变。
+    - 带 hash 的 JavaScript / CSS（如 `app.3f9c.js`）可以长期强缓存，因为内容一变文件名就变。
     - HTML 入口文件不要强缓存，否则发布后用户还拿着旧版本。
 
-## 跨域与 CORS
+- 跨域与 CORS：
 
 - 浏览器有同源策略：协议、域名、端口三者完全相同才算同源。
 - 不同源的接口请求，默认会被浏览器拦截响应，这是浏览器的安全限制，不是 bug。
+- CORS 是 Cross-Origin Resource Sharing，跨源资源共享。
 - CORS 是服务器主动开口子的机制：服务器在响应头里声明「我允许哪些来源访问」。
     - `Access-Control-Allow-Origin` 指定允许的来源。
     - 复杂请求前，浏览器会先发一个 OPTIONS 预检请求问服务器允不允许。
 - 关键认知：CORS 由服务端配置决定，前端改不了。前端遇到跨域报错，要找后端加白名单，或在开发期用本地代理。
 
-## Cookie 与 Token
+- Cookie 与 Token：
 
 - 两者都用来解决「服务器怎么知道这个请求是谁发的」。
 
 - Cookie：
     - 浏览器自动存储，并在每次请求时自动带上。
     - 服务器通过响应头 `Set-Cookie` 写入。
-    - 加 `HttpOnly` 后 JS 读不到，能挡 XSS 偷取；加 `SameSite` 能挡一部分 CSRF。
+    - 加 `HttpOnly` 后 JavaScript 读不到，能挡 XSS 偷取；加 `SameSite` 能挡一部分 CSRF。
 
 - Token（如 JWT）：
+    - JWT 是 JSON Web Token，一种常见的 token 格式。
     - 通常由前端拿到后自己保存，再手动放进请求头 `Authorization: Bearer <token>`。
     - 不会被浏览器自动携带，所以天然不受 CSRF 影响，但要自己管理存储和过期。
 
@@ -100,19 +103,20 @@ flowchart TD
     - 强调防 XSS、希望自动携带 → HttpOnly Cookie。
     - 前后端分离、多端共用、跨域调用多 → Token。
 
-## 浏览器存储
+- 浏览器存储：
 
 - 浏览器提供几种本地存储，按用途选。
-    - localStorage：键值对，持久保存，除非手动清，容量约几 MB，同步 API。
+    - localStorage：键值对，持久保存，除非手动清，容量约几 MB，同步 API。MB 是 megabyte，兆字节；API 是 Application Programming Interface，应用程序编程接口。
     - sessionStorage：和 localStorage 一样，但关闭标签页就清空。
     - Cookie：每次请求自动带上，容量很小，适合身份标识而非数据存储。
     - IndexedDB：浏览器内置的异步数据库，能存大量结构化数据和二进制，适合缓存图片、模型产物、离线数据。
 - 经验法则：小配置用 localStorage，大数据或二进制用 IndexedDB，身份凭证优先考虑 Cookie 的安全属性。
 
-## 文件上传与下载
+- 文件上传与下载：
 
 - 上传：
     - 用 `FormData` 把文件和字段打包，浏览器会自动设好 multipart 的请求头。
+    - multipart 是一种表单提交格式，适合同时传文件和普通字段。
     - 大文件可以切片分块上传，再在后端拼接，避免单次请求过大或超时。
 
 ```js
@@ -129,6 +133,7 @@ await fetch("/api/upload", {
 
 - 下载：
     - 接口返回的二进制可以转成 Blob，再生成一个临时 URL 触发下载。
+    - Blob 是 Binary Large Object，二进制大对象，可以理解成浏览器里的一块文件数据。
 
 ```js
 // 把接口返回的二进制保存为本地文件
@@ -144,7 +149,7 @@ a.click();
 URL.revokeObjectURL(url);               // 用完释放, 否则占内存
 ```
 
-## 判断网络相关代码是否靠谱
+- 判断网络相关代码是否靠谱：
 
 - 请求失败时是否区分了 4xx 和 5xx，并给出不同处理。
 - 身份凭证的存储方式是否和安全要求匹配。

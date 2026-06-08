@@ -1,14 +1,17 @@
 # 图形与渲染相关能力
 
 - 前端里做图形，不是所有情况都应该用同一种技术。
-- 先判断图形是结构化 UI、矢量图、大量 2D 绘制，还是 GPU shader 处理。
+- 先判断图形是结构化 UI（User Interface，用户界面）、矢量图、大量 2D 绘制，还是 GPU shader 处理。
+- GPU（Graphics Processing Unit，图形处理器）适合做大量并行计算，shader 可以理解成运行在 GPU 上的小程序。
 
 - DOM：
+    - DOM 是 Document Object Model，文档对象模型。
     - 适合按钮、输入框、面板、列表、表单。
     - 优点是可访问性、事件、布局能力都成熟。
     - 缺点是大量节点频繁变化时成本高。
 
 - SVG：
+    - SVG 是 Scalable Vector Graphics，可缩放矢量图形。
     - 适合少量矢量图形、路径、图标、节点连线。
     - 图形元素仍然是 DOM 节点，可以直接绑定事件。
     - 大量 SVG 节点会变慢。
@@ -19,6 +22,8 @@
     - 命中测试、选择、撤销重做需要自己维护数据结构。
 
 - WebGL / WebGPU：
+    - WebGL 是 Web Graphics Library，浏览器里的 3D 图形接口。
+    - WebGPU 是浏览器里更现代的 GPU 接口，能力更接近底层图形 API。
     - 适合 shader、纹理、GPU 加速图形计算。
     - 适合滤镜、后处理、粒子、大量并行计算。
     - 需要自己管理 shader、buffer、texture、framebuffer 等资源。
@@ -30,8 +35,9 @@
     - local 坐标：某个节点内部的局部坐标。
 
 - devicePixelRatio：
+    - devicePixelRatio 简称 DPR，表示 1 个 CSS 像素对应多少个物理像素。
     - CSS 像素不等于物理像素。
-    - Canvas 和 WebGL 需要根据 DPR 放大 backing store，避免高分屏发糊。
+    - Canvas 和 WebGL 需要根据 DPR 放大 backing store。backing store 是 canvas 真正存像素的内存区域，太小就会在高分屏上发糊。
 
 ```js
 const dpr = window.devicePixelRatio || 1;

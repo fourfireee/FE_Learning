@@ -1,8 +1,8 @@
 # JavaScript / TypeScript 基础必备知识
 
 - JavaScript 负责页面行为。
-- 浏览器里的 JavaScript 可以读写 DOM、监听事件、发起网络请求、处理异步任务。
-- TypeScript 在 JavaScript 之上增加类型检查，帮助你在运行前发现一部分错误。
+- 浏览器里的 JavaScript 可以读写 DOM（Document Object Model，文档对象模型）、监听事件、发起网络请求、处理异步任务。
+- TypeScript 是 JavaScript 的类型增强版本，会在开发和构建阶段做类型检查，帮助你在运行前发现一部分错误。
 
 - JavaScript 的几个核心模型：
     - 值：数字、字符串、布尔值、对象、数组、函数。
@@ -63,7 +63,7 @@ function updateNode(nodes: FilterNode[], nextNode: FilterNode) {
 }
 ```
 
-- 判断 JS / TS 写得是否靠谱：
+- 判断 JavaScript / TypeScript 写得是否靠谱：
     - 数据结构是否清楚。
     - 异步流程是否可读。
     - 错误是否被处理。
@@ -71,4 +71,4 @@ function updateNode(nodes: FilterNode[], nextNode: FilterNode) {
     - TypeScript 类型是否表达业务边界，而不是到处使用 `any`。
 
 - 可运行示例：
-    - [JS 事件循环与 DOM 示例](../examples/03-js-event-loop-and-dom/index.html)
+    - [JavaScript 事件循环与 DOM 示例](../examples/03-js-event-loop-and-dom/index.html)

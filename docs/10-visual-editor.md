@@ -7,13 +7,13 @@
     - node：节点。
     - edge：连线。
     - port / handle：节点上的输入输出口。
-    - viewport：当前视口的平移和缩放。
-    - selection：当前选中的节点或边。
+    - viewport：视口，也就是当前能看到的编辑器区域，包含平移和缩放。
+    - selection：选择集，也就是当前选中的节点或边。
 
 - 坐标转换：
-    - 鼠标事件给的是 screen 坐标。
-    - 编辑器内容有 pan 和 zoom。
-    - 真正保存节点位置时，应该保存 graph 坐标。
+    - 鼠标事件给的是 screen 坐标，也就是浏览器窗口里的位置。
+    - 编辑器内容有 pan 和 zoom。pan 是平移，zoom 是缩放。
+    - 真正保存节点位置时，应该保存 graph 坐标，也就是节点图自己的世界坐标。
 
 ```js
 function screenToGraph(point, viewport) {
@@ -35,9 +35,10 @@ function screenToGraph(point, viewport) {
     - 撤销重做。
 
 - 命中测试：
-    - DOM 节点可以直接用事件系统。
+    - 命中测试就是判断鼠标点到了哪个对象。
+    - DOM（Document Object Model，文档对象模型）节点可以直接用事件系统。
     - Canvas 需要自己判断鼠标是否落在图形范围内。
-    - SVG 可以利用 DOM 事件，也可以自己做几何判断。
+    - SVG（Scalable Vector Graphics，可缩放矢量图形）可以利用 DOM 事件，也可以自己做几何判断。
 
 - 性能关键点：
     - 拖拽中避免全图重算。
@@ -51,7 +52,7 @@ function screenToGraph(point, viewport) {
     - `edges`：边数组。
     - `handles`：连接点。
     - `viewport`：缩放和平移。
-    - `custom node`：自定义节点 UI。
+    - `custom node`：自定义节点 UI（User Interface，用户界面）。
     - `custom edge`：自定义连线 UI。
 
 - 判断编辑器代码是否靠谱：
