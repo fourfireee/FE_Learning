@@ -14,6 +14,9 @@
     </header>
 
     <main class="layout">
+      <!-- aria-labelledby 指向某个元素的 id，把那个元素的文字当作本区域的“名字”，
+           读屏软件读到这个 section 时会念出“滤镜参数”，让用户知道这块是干什么的。
+           这里指向下面 h2 的 id="form-title"。 -->
       <section class="panel" aria-labelledby="form-title">
         <h2 id="form-title">滤镜参数</h2>
 
@@ -43,6 +46,11 @@
 
       <section class="panel" aria-labelledby="result-title">
         <h2 id="result-title">生成结果</h2>
+        <!-- pre(preformatted)：预格式化文本，会原样保留空格和换行，并用等宽字体显示，
+             适合展示代码、JSON 等需要保持排版的内容（普通标签会把连续空格和换行折叠掉）。
+             aria-live="polite"：把这块标记为“动态区域”，当 JS 往里写入新内容时，
+             读屏软件会自动朗读出来；polite 表示“不打断用户，等空闲了再念”
+             （对应的 assertive 则会立刻打断）。 -->
         <pre id="result" aria-live="polite"></pre>
       </section>
     </main>

@@ -1,22 +1,82 @@
+/*
+ * 全局重置：给所有元素统一设置 box-sizing。
+ *
+ * `*`：通配选择器，匹配页面上的所有元素，所以这条规则给每个元素都生效。
+ *
+ * box-sizing：改变“元素宽高怎么计算”的规则。盒模型里一个元素的实际占地
+ *   = content(内容) + padding(内边距) + border(边框)。
+ *
+ *   - 默认值 content-box：你写的 width 只算内容区，再加 padding/border 会把元素撑得更宽。
+ *     例：width:100px; padding:20px; border:5px → 实际占地 100 + 20*2 + 5*2 = 150px（反直觉）。
+ *
+ *   - border-box：你写的 width 是包含 padding 和 border 的最终宽度，内容区自动收缩适应。
+ *     例：同样设置 → 实际占地就是 100px，内容区被压成 100 - 20*2 - 5*2 = 50px。
+ *
+ * 为什么几乎所有项目都这么写：用 border-box 后，width:100px 就是肉眼看到的 100px，
+ * 加内边距/边框不会把布局撑爆，算尺寸的心智负担小很多。配合 `*` 一次性应用到所有元素，
+ * 是非常常见的“全局重置”写法。
+ */
 * {
   box-sizing: border-box;
 }
 
 body {
+  /* margin：元素的外边距，即元素边框到外部相邻元素之间的“外部空白”
+     （对比 padding 是边框到内容之间的“内部空白”）。
+     浏览器默认会给 body 一圈 8px 左右的 margin，写 margin:0 把它清掉，
+     这样页面内容能贴边铺满，避免出现莫名其妙的白边。 */
   margin: 0;
   min-height: 100vh;
   color: #17202a;
   background: #f4f7fb;
+  /* font-family 是一个“字体回退列表”：浏览器从左到右依次尝试，
+     用第一个在当前系统里能找到的字体，前一个找不到才用后一个。
+     这里全部指向各系统“自带的默认 UI 字体”，好处是无需下载字体、加载快，
+     而且每个平台都用自己的原生字体，观感最自然：
+       - system-ui：标准写法，直接取当前操作系统的默认 UI 字体；
+       - -apple-system / BlinkMacSystemFont：兼容旧版 Safari / 旧版 Chrome 的 macOS 写法；
+       - "Segoe UI"：Windows 的默认字体（含空格所以要加引号）；
+       - sans-serif：兜底，前面都没命中时用浏览器默认的无衬线字体。 */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* 开头的 `.` 表示“类选择器”：匹配 HTML 里 class 属性包含这个名字的元素。
+   比如 .page-header 对应 <header class="page-header">，.layout 对应 <main class="layout">。
+   对比其他选择器：
+     - 标签选择器：直接写标签名，如 body、h1（匹配所有该标签）。
+     - 类选择器：以 . 开头，如 .layout（匹配 class 含 layout 的元素，可复用在多个元素上）。
+     - id 选择器：以 # 开头，如 #result（匹配 id 等于 result 的那一个元素，应当全页唯一）。
+   下面用逗号隔开两个选择器，表示这组样式同时应用到 .page-header 和 .layout。 */
 .page-header,
 .layout {
+  /* calc() 让你在 CSS 里做四则运算，还能混用不同单位（px、% 等）。
+     calc(100% - 32px)：先取父容器宽度的 100%，再减去 32px，
+     相当于左右各留 16px 边距，让内容不会贴到屏幕边缘。
+     注意：减号两侧必须留空格，写成 100%-32px 会解析失败。
+
+     min(a, b)：取两者中较小的值。所以这里：
+       - 屏幕较宽时，calc(100% - 32px) 很大，min 取较小的 960px → 内容最宽 960px，居中不会无限拉伸；
+       - 屏幕较窄时（窄于约 992px），960px 较大，min 取 calc(100% - 32px) → 内容随屏幕收缩并保留左右边距。
+     一句话：内容最宽 960px，同时在小屏上自动留边自适应。 */
   width: min(960px, calc(100% - 32px));
+  /* margin 的简写：两个值时是“上下 左右”。
+     0 auto = 上下外边距 0；左右外边距 auto。
+     左右都设为 auto，浏览器会把剩余的水平空间平均分到两侧，
+     从而让这个有固定/最大宽度的块级元素水平居中。
+     （注意：auto 居中只对有明确宽度的块级元素生效，本元素上一行已用 width 限定了宽度。）
+
+     补充：margin 简写按值的个数有不同含义——
+       - 1 个值：四边都相同；
+       - 2 个值：上下 | 左右；
+       - 3 个值：上 | 左右 | 下；
+       - 4 个值：上 | 右 | 下 | 左（顺时针）。 */
   margin: 0 auto;
 }
 
 .page-header {
+  /* padding 是内边距（边框到内容之间的内部空白），简写规则和 margin 一样：
+     3 个值时是“上 | 左右 | 下”。
+     所以 32px 0 18px = 上内边距 32px；左右内边距 0；下内边距 18px。 */
   padding: 32px 0 18px;
 }
 
@@ -31,8 +91,23 @@ body {
 }
 
 .layout {
+  /* display: grid 把这个元素变成“网格容器”，它的直接子元素会按网格排布。
+     （对比 display: flex 是一维布局；grid 是二维，可同时控制行和列。） */
   display: grid;
+
+  /* grid-template-columns 定义“有几列、每列多宽”。这里给了两个值，所以是两列。
+     fr(fraction，分数单位)：按比例瓜分剩余空间。1fr 1fr 表示两列等分。
+     minmax(min, max)：限定该列宽度在 min~max 之间。
+     minmax(0, 1fr) 是 grid 里很常见的写法：
+       - max 取 1fr → 正常情况下两列等分；
+       - min 取 0 → 允许列收缩到比内容更窄。
+     如果只写 1fr，列的最小宽度默认是 auto(即内容宽度)，当子元素里有很长的内容
+     （如长文本、pre 代码块）时会把列撑大、撑破布局甚至溢出；
+     用 minmax(0, 1fr) 把最小宽度降到 0，列就能正常收缩，避免溢出。 */
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+  /* gap：网格的“间距”，即行与行、列与列之间的空隙，这里每个缝隙 16px。
+     比起给每个子元素加 margin，gap 只在元素之间产生间距、不会在最外圈留多余空白，更省心。 */
   gap: 16px;
 }
 
@@ -67,6 +142,12 @@ button {
   border: 1px solid #c6cfdd;
   border-radius: 6px;
   padding: 0 10px;
+
+  /* font: inherit —— 让表单控件继承父元素（最终来自 body）的字体设置。
+     原因：input、select、button 这类表单控件不会自动继承页面字体，浏览器会给它们
+     套一套自带的默认字体（往往和正文不一致，比如变小、变成另一种字体）。
+     写 font: inherit 强制它们用和正文相同的 font-family、font-size 等，保证全站字体统一。
+     （inherit 是 CSS 关键字，表示“取父元素的计算值”；font 是简写，一次性继承字体相关的多个属性。） */
   font: inherit;
 }
 
@@ -80,6 +161,15 @@ button {
 pre {
   min-height: 176px;
   margin: 0;
+
+  /* overflow 控制“内容超出元素盒子时怎么处理”。
+     auto：内容没超出时什么都不显示；一旦超出，自动出现滚动条（按需，且只在需要的方向出现）。
+     这里 pre 会原样保留排版、不折行，遇到很长的 JSON 行可能横向超出，
+     overflow: auto 就让它在框内滚动，而不是把布局撑破或溢出到外面。
+     对比其他取值：
+       - visible(默认)：超出部分直接溢出显示，可能压到别的内容；
+       - hidden：超出部分被裁掉、看不见，也没有滚动条；
+       - scroll：始终显示滚动条（即使没超出也占位）。 */
   overflow: auto;
   border-radius: 6px;
   padding: 12px;
@@ -87,6 +177,13 @@ pre {
   background: #111827;
 }
 
+/* @media 是“媒体查询”：只有当括号里的条件成立时，里面的 CSS 才生效。
+   它是实现“响应式布局”的核心手段——同一套页面在不同屏幕宽度下用不同样式。
+   (max-width: 720px)：当视口(可视区域)宽度 <= 720px 时条件成立，常见于手机/窄窗口。
+   所以这段的意思是：屏幕窄到 720px 及以下时，把 .layout 从前面的两列
+   (minmax(0,1fr) minmax(0,1fr)) 改成单列(1fr)，让两个面板上下堆叠，避免挤在一起。
+   宽屏时这段不生效，仍然是两列布局。
+   （对应还有 min-width 表示“宽度大于等于某值时生效”，可按需组合。） */
 @media (max-width: 720px) {
   .layout {
     grid-template-columns: 1fr;

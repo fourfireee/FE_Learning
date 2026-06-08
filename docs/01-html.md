@@ -26,6 +26,7 @@ flowchart LR
     - `nav`：导航。
     - `form`：表单。
     - `button`：按钮。
+    - `a`（anchor，锚）：超链接，用 `href` 指定要跳转的地址，比如 `<a href="https://example.com">去示例站</a>`。
 
 - 表单的关键点：
     - `form` 收集输入。
