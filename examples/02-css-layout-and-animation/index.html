@@ -8,6 +8,10 @@
   </head>
   <body>
     <main class="workspace">
+      <!-- aside：语义化标签，表示“和主内容相关但相对独立的辅助区域”，
+           典型用途就是侧边栏（工具栏、目录、相关链接等）。
+           它和 div 渲染效果一样，区别只在语义：读屏软件和搜索引擎
+           能识别出“这块是辅助内容”，而 div 没有任何含义。 -->
       <aside class="sidebar">
         <h1>CSS 示例</h1>
         <button>选择</button>
@@ -15,6 +19,10 @@
         <button>连线</button>
       </aside>
 
+      <!-- aria-label：直接给这个区域写一个“名字”，读屏软件读到这里会念出“布局面板”。
+           和 aria-labelledby 的区别：labelledby 是指向页面上已有元素的 id、复用那段文字；
+           label 是凭空写一个名字，适合页面上没有现成可见标题的情况（比如这个 section
+           里没有归纳性的标题可以指向）。两者都是给无障碍辅助技术用的，不影响显示。 -->
       <section class="content" aria-label="布局面板">
         <div class="toolbar">
           <span>Flex 工具栏</span>
@@ -22,6 +30,11 @@
         </div>
 
         <div class="card-grid">
+          <!-- article：语义化标签，表示“一块自成一体、可以独立分发的内容”，
+               比如一篇文章、一条评论、一张卡片。判断标准：把它单独拿出来
+               （脱离当前页面）依然有完整意义，就适合用 article。
+               这里每张卡片都有自己的标题和正文，互相独立，所以用 article；
+               如果只是纯样式的容器、内容彼此不独立，用 div 即可。 -->
           <article class="card">
             <h2>盒模型</h2>
             <p>padding、border、margin 一起决定元素占用的空间。</p>

@@ -12,6 +12,10 @@ body {
 
 .workspace {
   display: grid;
+  /* 两列布局：第一列固定 220px（侧边栏），第二列 minmax(0, 1fr) 占满剩余空间（内容区）。
+     这是“固定侧边栏 + 弹性内容区”的经典写法：窗口变宽变窄时，只有内容区伸缩，侧边栏不动。
+     minmax(0, 1fr) 而不是裸 1fr：把列的最小宽度从默认的 auto（内容宽度）降到 0，
+     防止内容区里出现超宽内容时把列撑破、挤压侧边栏。 */
   grid-template-columns: 220px minmax(0, 1fr);
   min-height: 100vh;
 }
@@ -26,16 +30,27 @@ body {
 }
 
 .sidebar h1 {
+  /* margin 三个值的简写：上 | 左右 | 下，即上 0、左右 0、下 12px。
+     浏览器默认给 h1 上下各加一段较大的 margin，这里清掉上边距（避免顶部多出空白），
+     只保留 12px 下边距，和下方按钮拉开距离。 */
   margin: 0 0 12px;
   font-size: 22px;
 }
 
+/* 组合选择器，两部分含义：
+   1. 空格是“后代选择器”：.sidebar button 表示“.sidebar 里面（任意层级）的 button”。
+   2. 逗号是“或”的意思：把多个选择器合并共用同一套样式，等价于分开写两条一模一样的规则。
+   这里就是让侧边栏和工具栏里的按钮长得一样，避免重复代码。
+*/
 .sidebar button,
 .toolbar button {
   min-height: 36px;
   border: 1px solid #b8c5d6;
   border-radius: 6px;
   background: #ffffff;
+  /* font 是简写属性，一次性覆盖 font-family / font-size / font-weight / line-height 等。
+     表单控件（button、input）默认不继承页面字体，而是用系统/浏览器自带的字体设置，
+     font: inherit 强制全部从父元素继承，让按钮文字和页面其它文字保持一致。 */
   font: inherit;
   cursor: pointer;
 }
@@ -47,6 +62,17 @@ body {
 
 .toolbar {
   display: flex;
+
+  /* flex 容器有两条轴：主轴（默认水平，子元素沿它排列）和交叉轴（垂直于主轴）。
+     justify-content 管主轴方向的分布，align-items 管交叉轴方向的对齐。
+
+     align-items: center —— 子元素在交叉轴（这里是垂直方向）居中，
+     即文字和按钮在 48px 高的工具栏里垂直居中，不用手算 margin/padding。
+
+     justify-content: space-between —— 主轴（水平方向）两端对齐：
+     第一个子元素贴左、最后一个贴右，剩余空间平均分到中间的间隔里。
+     这里正好让标题靠左、按钮靠右，是工具栏/导航栏的经典写法。
+     其他常用值：flex-start 靠左 / center 居中 / space-around、space-evenly 不同的留白分法。 */
   align-items: center;
   justify-content: space-between;
   min-height: 48px;
@@ -58,6 +84,12 @@ body {
 
 .card-grid {
   display: grid;
+  /* repeat(3, ...) 是简写：重复 3 次，等价于写三遍 minmax(0, 1fr)，即三等分列。
+     1fr 的 fr 是“剩余空间的份数”：三列各占 1 份，所以各占三分之一。
+     套一层 minmax(0, 1fr) 的原因和上面 .workspace 一样：
+     裸 1fr 的最小宽度是 auto（由内容决定），卡片里若有长单词或长链接，
+     会把那一列撑宽、三列就不等宽了；minmax(0, 1fr) 把最小宽度压到 0，
+     强制三列永远等宽，内容超出由卡片自己处理（换行/截断）。 */
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-top: 14px;
@@ -83,9 +115,24 @@ body {
 }
 
 .moving-card {
+  /* animation 简写，按顺序拆开是：
+     float-card    动画名，对应下面 @keyframes float-card 定义的关键帧；
+     1.8s          一轮动画的时长；
+     ease-in-out   缓动曲线，起步和收尾都慢、中间快，比匀速（linear）更自然；
+     infinite      无限循环，不写默认只播 1 次；
+     alternate     往返播放：第一轮 from→to，第二轮 to→from 倒着回来，
+                   这样卡片上下浮动是平滑的，不会播完瞬间跳回起点。 */
   animation: float-card 1.8s ease-in-out infinite alternate;
 }
 
+/* @keyframes 定义一段“关键帧动画”：给动画起个名字（float-card），
+   然后描述若干关键时间点上元素长什么样，浏览器会自动补出中间的过渡帧。
+   from 是起点（等价于 0%），to 是终点（等价于 100%）；
+   也可以写任意百分比分多段，如 0% { } 50% { } 100% { }。
+   这里：起点在原位（translateY(0)），终点向下偏移 12px——
+   配合上面 animation 的 infinite alternate 往返循环，形成上下浮动效果。
+   @keyframes 本身只是“定义”，不会让任何元素动起来；
+   必须有元素通过 animation 属性引用这个名字才会播放。 */
 @keyframes float-card {
   from {
     transform: translateY(0);
@@ -96,11 +143,27 @@ body {
   }
 }
 
+/* @media 媒体查询：括号里的条件成立时，里面的 CSS 才生效，是响应式布局的核心。
+   (max-width: 760px) = 视口宽度 <= 760px（手机/窄窗口）时生效。此时：
+     - .workspace 从“220px 侧边栏 + 弹性内容区”两列变成单列，侧边栏和内容区上下堆叠；
+     - .sidebar 的分隔线从右边框改成下边框（因为它现在在内容区上方而不是左侧）；
+     - .card-grid 卡片也收成单列，避免窄屏里挤压。
+   宽屏时这段不生效，维持原布局。 */
 @media (max-width: 760px) {
+  /* 这里再写一次 .workspace，不是新建一个规则“替换”前面那个，
+     而是“补充覆盖”：CSS 里同一个元素可以被多条规则同时命中，属性逐条合并；
+     冲突的属性按优先级和书写顺序决定谁赢（这就是 C——层叠 cascade）。
+     窄屏时这两条选择器优先级相同，这条写在后面，所以 grid-template-columns
+     被覆盖成 1fr；前面 .workspace 里没冲突的属性（display: grid、min-height）依然有效。
+     所以这里只需写“想改的那一个属性”，不用把整套样式重抄一遍。 */
   .workspace {
     grid-template-columns: 1fr;
   }
 
+  /* 窄屏（≤760px）时，.workspace 变成单列，侧边栏跑到内容区上方。
+     这时右边框就没意义了，所以 border-right: 0 把它清掉，
+     再用 border-bottom: 1px solid #cfdae8 在侧边栏底部画分隔线，正好隔开它和下方的内容区。
+   */
   .sidebar {
     border-right: 0;
     border-bottom: 1px solid #cfdae8;
