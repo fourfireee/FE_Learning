@@ -12,6 +12,16 @@
       <div id="root"></div>
     </main>
 
+    <!-- React 不是浏览器自带的，必须先把库加载进来，下面的 app.js 才能用。
+         正式项目一般用 npm 安装、构建工具打包；这个示例为了不装任何工具、
+         双击就能跑，直接从 unpkg 这个 CDN 引入现成的库文件。
+         拆成两个包是 React 的设计：
+           - react：核心库，提供 React.createElement、useState 等（挂到全局变量 React 上）；
+           - react-dom：负责把组件渲染到浏览器 DOM，提供 ReactDOM.createRoot（挂到 ReactDOM 上）。
+             拆开是因为核心库也能配其他渲染器（如 React Native 渲染到手机原生界面）。
+         development 版是开发版，带完整报错提示，方便学习；上线应换 production 版。
+         顺序不能乱：app.js 用到全局的 React/ReactDOM，所以这两个必须排在它前面
+         （script 默认按出现顺序依次执行）。 -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="./app.js"></script>
