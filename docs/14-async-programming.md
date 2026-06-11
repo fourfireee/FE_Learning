@@ -44,6 +44,10 @@ async function loadModels() {
       // fetch 不会因为 4xx/5xx 自动抛错, 要自己检查
       throw new Error(`请求失败: ${res.status}`);
     }
+    // 这里也要 await：res.json() 返回的同样是 Promise，不是数据本身。
+    // 因为 fetch 在拿到响应头时就 resolve 了，此时响应体可能还在网络上传输，
+    // .json() 要等正文全部到达再解析，所以它也是异步操作。
+    // 漏写 await 的话，data 拿到的是 Promise 对象而不是数据。
     const data = await res.json();          // 等解析完成
     return data;
   } catch (err) {
@@ -83,7 +87,13 @@ const [a, b, c] = await Promise.all([fetchA(), fetchB(), fetchC()]);
 
 ```js
 function withTimeout(promise, ms) {
-  // 一个到时间就 reject 的 Promise
+  // 一个到时间就 reject 的 Promise。
+  // new Promise(executor) 的 executor 函数会收到两个参数，都是 Promise 内部提供的函数：
+  //   - 第 1 个（惯例叫 resolve）：调用它 = 宣布这个 Promise 成功，并带上成功值；
+  //   - 第 2 个（惯例叫 reject）：调用它 = 宣布这个 Promise 失败，并带上失败原因。
+  // 这里给第 1 个参数起名 `_`：它不是什么特殊函数，就是 resolve，
+  // 只是这个 Promise 永远不会成功、用不到它——用 `_` 当名字是
+  // “这个参数我故意不用”的通用编程惯例（占位而已，叫别的名字也能跑）。
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error("超时")), ms)
   );
@@ -103,6 +113,14 @@ await withTimeout(fetch("/api/slow"), 5000); // 最多等 5 秒
 ```js
 const controller = new AbortController();
 
+// { signal: controller.signal } 的运作原理：
+//   - controller.signal 是一个 AbortSignal 对象，可以理解为控制器牵出来的一根“遥控线”，
+//     它身上有 aborted 状态（是否已取消），并且能监听 abort 事件。
+//   - 作为 fetch 第二个参数（配置对象）的 signal 字段传进去后，fetch 内部会订阅这个信号：
+//     一旦 controller.abort() 被调用，signal 触发 abort 事件，fetch 收到通知就中断
+//     底层网络请求，并让自己返回的 Promise 以 AbortError reject（进入下面的 catch）。
+//   - 控制器和信号是一对多：同一个 signal 可以挂给多个 fetch，一次 abort() 全部取消。
+//   - 这个机制是通用的取消协议，不止 fetch——addEventListener 等 API 也接受 signal。
 fetch("/api/generate", { signal: controller.signal }) // 把信号挂上去
   .then((res) => res.json())
   .catch((err) => {
@@ -127,7 +145,18 @@ async function retry(fn, times = 3) {
     } catch (err) {
       if (i === times - 1) throw err; // 最后一次还失败就放弃
       // 退避: 第 1 次等 200ms, 第 2 次 400ms ...
-      await new Promise((r) => setTimeout(r, 200 * 2 ** i));
+      // 完整形式是两个参数都接收，成功调 resolve(值)、失败调 reject(错误)：
+      //   new Promise((resolve, reject) => {
+      //     doSomething((err, value) => {
+      //       if (err) reject(err);      // 失败：带上错误原因
+      //       else resolve(value);       // 成功：带上结果值
+      //     });
+      //   });
+      // 这行是 JS 里“睡 N 毫秒”的惯用写法。注意 setTimeout(resolve, ...) 传的是
+      // 函数引用（没加括号），即把 resolve 本身交给定时器，到点由定时器调用 resolve()，
+      // Promise 变成成功态，await 等到它就继续往下走。
+      // 等待本身就是目的，不需要带值、也不会失败，所以 resolve 不传参数、reject 直接省略。
+      await new Promise((resolve) => setTimeout(resolve, 200 * 2 ** i)); 
     }
   }
 }
@@ -144,17 +173,31 @@ async function runWithLimit(tasks, limit) {
   const running = new Set();
 
   for (const task of tasks) {
-    // 包一层, 完成后把自己从运行集合里移除
-    const p = task().then((r) => {
+    // task() 启动这个任务（task 是返回 Promise 的函数），然后用 .then 包一层：
+    // 任务完成时先把自己（p）从 running 集合里删掉——给池子腾出一个位置，
+    // 再把结果 result 原样 return，这样 p 这个新 Promise 的结果值和原任务一致。
+    // 复习：.then 返回的是一个“新的 Promise”，不是原来那个，也不是回调的返回值本身。
+    // 新 Promise 的结果由回调的返回值决定：返回普通值，新 Promise 就以这个值成功；
+    // 返回 Promise，则等它出结果并沿用。所以 p 是“task 的 Promise + 清理动作”的合体，
+    // 结果值仍是 result——这也是 .then 能一直链下去的原因。
+    // 注意 .then 回调里能引用 p 是因为闭包：回调执行时 p 早已赋值完成。
+    // result 是 .then 回调的参数，接收“上一个 Promise 成功的结果值”，
+    // 即 task() 算出来的结果。
+    // 别和 sleep 写法里的 resolve（新建 Promise 时 executor 的参数）混淆——
+    // 一个是拿到的“值”，一个是宣布成功的“函数”。
+    const p = task().then((result) => {
       running.delete(p);
-      return r;
+      return result;
     });
+    // 同一个 p 进两个容器，各管各的：
+    // running 只装“正在跑的”，跑完就删，size 就是当前并发数；
+    // results 按顺序攒下所有任务的 Promise，跑完也不删，留给最后 Promise.all 取结果。
     running.add(p);
     results.push(p);
 
     // 达到上限就等任意一个先跑完, 再继续放新任务
     if (running.size >= limit) {
-      await Promise.race(running);
+      await Promise.race(running); // `Promise.race`：返回最先结束的那个
     }
   }
   return Promise.all(results);
@@ -169,6 +212,9 @@ async function runWithLimit(tasks, limit) {
     - WebSocket 是浏览器和服务器之间的一条长连接，适合需要前端也频繁发消息的场景。
 
 ```mermaid
+%% TD = Top Down，指定流程图自上而下排布（%% 是 mermaid 的注释语法）。
+%% 其他方向：LR 从左到右、RL 从右到左、BT 从下到上；
+%% 本文件前面的图用的就是 LR，箭头横着走；这张图层级感强，竖着排更清晰。
 flowchart TD
     A["提交任务, 拿到 taskId"] --> B{"用哪种方式拿结果"}
     B --> C["轮询: 定时查询状态"]
