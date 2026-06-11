@@ -6,6 +6,13 @@ body {
   margin: 0;
   color: #17202a;
   background: #f5f7fb;
+  /* 字体栈：浏览器从左到右尝试，用上第一个可用的。
+     system-ui                 标准写法，直接用操作系统的界面字体（Mac 是苹方/SF，Windows 是微软雅黑/Segoe UI）；
+     -apple-system             老版 Safari 不认识 system-ui 时的兜底写法，作用相同；
+     BlinkMacSystemFont        老版 Chrome 在 Mac 上的同款兜底写法；
+     "Segoe UI"                老版 Windows 浏览器的兜底，名字带空格所以要加引号；
+     sans-serif                最终兜底：以上都不行就用浏览器默认的无衬线字体。
+     好处：不用下载字体文件，且各平台显示自己最熟悉的系统字体。 */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -22,6 +29,9 @@ h1 {
 
 .controls {
   display: flex;
+  /* 允许子项换行：flex 容器默认 nowrap（所有按钮挤在一行，放不下会被压缩或溢出）。
+     设为 wrap 后，一行放不下时按钮会自动换到下一行，
+     配合 gap 在窄屏（如手机）上保持按钮原始大小、整齐排列。 */
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 14px;
@@ -39,6 +49,12 @@ button {
 
 .grid {
   display: grid;
+  /* 两列等宽布局（日志面板 + 任务面板），也可简写成 repeat(2, minmax(0, 1fr))。
+     1fr：剩余空间按份数分，两列各 1 份即各占一半。
+     套 minmax(0, 1fr) 而不是裸 1fr：1fr 的最小宽度默认是 auto（由内容决定），
+     面板里的日志若出现超长不换行的文本，会把那一列撑宽、两列就不等宽了；
+     minmax(0, 1fr) 把最小宽度压到 0，保证两列严格各占一半，
+     内容放不下由面板自己处理（换行或滚动）。 */
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
 }
@@ -62,6 +78,11 @@ button {
   padding-left: 22px;
 }
 
+/* 群组选择器：逗号分隔表示"或"，同时命中两个面板里的列表项。
+   #log li 是后代选择器：选中 id 为 log 的元素内部的所有 <li>（不限层级）。
+   margin: 8px 0 即上下外边距 8px、左右 0，拉开每条日志/任务之间的间距；
+   相邻 li 的上下 margin 会发生外边距折叠（margin collapsing），
+   实际行间距是 8px 而不是 8+8=16px。 */
 #log li,
 #tasks li {
   margin: 8px 0;

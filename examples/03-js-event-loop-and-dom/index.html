@@ -11,6 +11,11 @@
     <main class="page">
       <h1>JS 事件循环与 DOM 示例</h1>
 
+      <!-- aria-label：给这个区域起一个“无障碍名字”，只给读屏软件等辅助技术用，
+           页面上不显示。读屏用户跳到这个 section 时会听到“示例按钮”，
+           从而知道这块区域是干什么的。section 本身没有可见标题时，
+           就用 aria-label 凭空命名（如果页面上已有现成标题元素，
+           则更适合用 aria-labelledby 指向那个元素的 id 来复用文字）。 -->
       <section class="controls" aria-label="示例按钮">
         <button id="run-event-loop">运行事件循环示例</button>
         <button id="run-closure">运行闭包示例</button>
@@ -21,6 +26,10 @@
       <section class="grid">
         <div class="panel">
           <h2>日志</h2>
+          <!-- ol（ordered list）：有序列表，每个子项 li 前会自动标上 1. 2. 3. 的序号。
+               对比 ul（unordered list，无序列表）：子项前是圆点，不带顺序含义（见下方任务列表）。
+               日志用 ol 是因为“执行顺序”正是这个示例要观察的重点，序号能直接体现先后。
+               这里内容为空，由 app.js 动态创建 li 插入。 -->
           <ol id="log"></ol>
         </div>
 
