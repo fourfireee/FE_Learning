@@ -28,6 +28,11 @@
       </section>
     </main>
 
+    <!-- 通过 CDN 引入 Vue 本体：unpkg 是个公共 CDN，能直接按包名拿到 npm 上的文件。
+         vue@3 指 Vue 3 的最新版，vue.global.js 是“全局构建”版本——
+         加载后会在 window 上挂一个全局变量 Vue，下面 app.js 才能直接用 Vue.createApp 等 API。
+         好处是不用安装 Node、不用打包工具，浏览器直接能跑（代价是需要联网访问 CDN）。
+         注意顺序：这行必须在 app.js 之前，否则 app.js 运行时 Vue 还不存在。 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="./app.js"></script>
   </body>
