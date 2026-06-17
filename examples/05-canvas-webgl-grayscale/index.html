@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Canvas / WebGL 灰度滤镜示例</title>
     <link rel="stylesheet" href="./style.css">
+    <!-- defer：让脚本「延迟到 HTML 全部解析完再执行」。
+         脚本会在后台异步下载（不阻塞解析），但保证等 DOM 构建好后、按出现顺序执行。
+         好处：放在 <head> 里也不会卡住页面渲染，且执行时下面的元素都已存在，能安全地拿到它们。
+         为什么不卡？普通 <script> 写在 <head> 时，浏览器解析到它会「停下来」先下载并执行脚本，
+         这期间下面的 <body> 还没开始解析，用户就看到白屏——这叫「解析阻塞 / render blocking」。
+         加了 defer 后，脚本改成后台异步下载、且推迟到解析完才执行，解析过程一刻不停，自然就不卡了。 -->
     <script src="./app.js" defer></script>
   </head>
   <body>

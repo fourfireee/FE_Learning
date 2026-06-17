@@ -55,6 +55,9 @@ button {
   gap: 16px;
 }
 
+/* .canvases > div：「子选择器」，只选中 .canvases 的【直接子级】里的 div，
+   不会影响更深层嵌套的 div。这里用来给每个画布外面那层卡片加边框、圆角、白底。
+   对比：.canvases div（中间是空格）会选中所有后代 div，层级再深也算。 */
 .canvases > div {
   border: 1px solid #d5deea;
   border-radius: 8px;

@@ -8,6 +8,9 @@ let animationRunning = false;
 let startTime = 0;
 
 function createBars() {
+  // DocumentFragment 是一个「内存里的临时容器」，不在真实页面上。
+  // 先把 120 个元素都加进它（这些操作不碰页面，不会触发渲染），
+  // 最后一次性插入页面，浏览器只需重排/重绘一次，比循环里逐个 append 到页面高效得多。
   const fragment = document.createDocumentFragment();
 
   for (let index = 0; index < 120; index += 1) {
@@ -22,6 +25,9 @@ function createBars() {
 
 function runBadLayout() {
   const items = [...document.querySelectorAll(".bar")];
+  // performance.now() 返回一个高精度时间戳（毫秒，带小数）。
+  // 在操作前后各取一次、相减，就能算出这段代码的耗时。
+  // 它比 Date.now() 更精确，且不受系统时间被修改的影响，专门用于性能测量。
   const begin = performance.now();
 
   items.forEach((item) => {
