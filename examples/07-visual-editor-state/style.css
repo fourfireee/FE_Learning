@@ -37,6 +37,10 @@ button {
   cursor: pointer;
 }
 
+/* button.active：同时是 button 元素、又带有 class="active" 时才命中（中间无空格=同一元素的双重条件）。
+   用来给「激活态」的按钮换成蓝底白字，做出高亮效果。
+   这里的 active 是自定义 class（由 JS 在切到连线模式时加/去掉），不是 CSS 自带的 :active 伪类。
+   对比：:active 是鼠标按下那一刻的临时状态；.active 是我们自己控制的持续状态。 */
 button.active {
   border-color: #1f6feb;
   color: #ffffff;
@@ -50,6 +54,18 @@ button.active {
   border: 1px solid #cdd8e6;
   border-radius: 8px;
   background-color: #ffffff;
+  /* 用两层渐变画出「网格背景」（编辑器常见的方格底纹），不需要图片。
+     原理：每层渐变只在最开始 1px 涂浅灰、之后全透明，于是只剩一条 1px 的细线；
+     再靠 background-size: 24px 24px 让这个图案每 24px 重复一次，细线就变成等距排列的格线。
+       第 1 行：默认方向(从上到下) → 画出一条条【横线】，每 24px 一条。
+       第 2 行：90deg(从左到右) → 画出一条条【竖线】，每 24px 一条。
+     两层叠加 = 横线 + 竖线 = 网格。transparent 那段保证线之间是透明的，露出下面的白底。
+
+     注意 `transparent 1px` 的读法：这是「颜色停靠点(color stop)」，语法是「颜色 位置」，
+     表示【在 1px 这个位置放透明色】，不是说透明只有 1px 宽。
+     这里两个停靠点 `#eef2f7 1px` 和 `transparent 1px` 位置相同(都在 1px)，没有过渡区 → 形成硬切：
+       0~1px = 灰色（所以真正只有 1px 宽的是灰线）；1px~图案末尾 = 透明（占绝大部分）。
+     图案末尾(重复周期)由 background-size 的 24px 决定：每 24px 里头 1px 灰、其余 23px 透明。 */
   background-image:
     linear-gradient(#eef2f7 1px, transparent 1px),
     linear-gradient(90deg, #eef2f7 1px, transparent 1px);
@@ -59,12 +75,17 @@ button.active {
 .edges,
 .nodes {
   position: absolute;
+  /* inset: 0 是 top/right/bottom/left 全设为 0 的简写。
+     配合 position: absolute，让这层【铺满最近的定位父元素】(这里是 .editor)。
+     作用：连线层和节点层都精确铺满编辑器、完全重叠对齐，坐标系一致，连线才能对准节点。 */
   inset: 0;
 }
 
 .edges {
   width: 100%;
   height: 100%;
+  /* 让这一层「鼠标穿透」：连线层盖在节点层之上，但鼠标点击/拖拽会直接穿过它
+     落到下面的节点上，不会被连线挡住。类似把整层设成不接收输入事件的 overlay。 */
   pointer-events: none;
 }
 
@@ -84,6 +105,9 @@ button.active {
   background: #ffffff;
   box-shadow: 0 8px 18px rgba(23, 32, 42, 0.10);
   cursor: grab;
+  /* user-select: none 禁止选中节点里的文字。
+     原因：节点是用来【拖拽】的，若不禁用，拖动时鼠标会顺手把文字一起框选成蓝色高亮，体验很糟。
+     设为 none 后，按住拖动只会移动节点，不会误选文本。拖拽类元素几乎都要加这一行。 */
   user-select: none;
 }
 

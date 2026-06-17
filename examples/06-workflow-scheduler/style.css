@@ -64,6 +64,11 @@ button {
 }
 
 .status {
+  /* inline-block：兼具 inline 和 block 两者的特点——
+       像 inline 一样：不独占一行，可以和文字并排（适合做状态小标签/徽章）。
+       像 block 一样：可以设 width/height、上下 padding/margin 生效。
+     这里用它把状态做成一个能加内边距、不换行的「胶囊徽章」。
+     对比：纯 inline(如默认的 <span>)上下 padding 不撑开盒子；纯 block 会独占一行、挤到下一行去。 */
   display: inline-block;
   border-radius: 999px;
   padding: 3px 9px;

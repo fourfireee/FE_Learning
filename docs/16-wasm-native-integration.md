@@ -36,8 +36,16 @@ flowchart LR
 # 把 C++ 编译成 wasm + JavaScript 胶水
 # -O3 开优化, -s MODULARIZE 让产物成为一个可 import 的模块
 # -s EXPORTED_FUNCTIONS 指定要暴露给 JavaScript 调用的函数
+# MODULARIZE=1 里的 =1 是「开启」的意思：emscripten 的 -s 选项是键值对(KEY=VALUE)，
+#   1 表示 true(打开)、0 表示 false(关闭)。所以 MODULARIZE=1 等于「把这个开关打开」。
 emcc engine.cpp -O3 -s MODULARIZE=1 \
+  # EXPORTED_FUNCTIONS：导出「你自己 C/C++ 代码里的函数」，是 wasm 里真正的业务逻辑。
+  #   名字前的下划线 _ 是 C 函数编译后的命名约定（_process_image 对应 C 里的 process_image）。
+  #   _malloc / _free 是内存分配/释放，跨语言传数据(如图片缓冲)时常要手动管理，所以也一并导出。
   -s EXPORTED_FUNCTIONS='["_process_image","_malloc","_free"]' \
+  # EXPORTED_RUNTIME_METHODS：导出「emscripten 运行时(胶水代码)自带的辅助工具」，不是你写的函数。
+  #   ccall：直接按名字调用一个 C 函数；cwrap：把 C 函数包成一个可重复调用的 JS 函数。
+  #   一句话区分：EXPORTED_FUNCTIONS = 你的业务函数；EXPORTED_RUNTIME_METHODS = 调用它们用的“工具”。
   -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap"]' \
   -o engine.js
 ```
@@ -102,6 +110,30 @@ engine._free(ptr);
 - 渲染引擎接入有两条路：
     - 引擎只算像素，结果回传 JavaScript，由 JavaScript 画到 2D Canvas（适合滤镜、后处理这类逐像素结果）。
     - 引擎直接驱动 WebGL，把一个 canvas 交给 WASM，引擎内部的 GL 调用经 emscripten 直接渲染到这个 canvas（适合完整的实时渲染管线）。
+        - 这条路怎么跑通，分步看（核心：让引擎里原本的 OpenGL 代码「画到」网页的 canvas 上）：
+            1. 页面上放一个 `<canvas>`，并在 JS 里告诉 emscripten 用它（通常通过 `Module.canvas` 指定）。
+
+            ```html
+            <!-- ① 页面里准备好画布 -->
+            <canvas id="game"></canvas>
+
+            <script>
+              // ② 在加载 wasm 前，先准备一个 Module 配置对象
+              var Module = {
+                // ③ 把这个 canvas 交给 emscripten——引擎里的 GL 调用就会画到它上面
+                canvas: document.getElementById("game"),
+              };
+            </script>
+            <!-- ④ 再加载 emscripten 生成的胶水脚本；它启动时会读取上面的 Module.canvas -->
+            <script src="engine.js"></script>
+            ```
+
+            > 关键点：`Module` 要在加载 `engine.js` **之前**定义好，胶水代码初始化时会去读 `Module.canvas`，从而知道该往哪个 canvas 渲染。
+            2. 引擎初始化时调用类似 `glViewport`、`glClear` 的 OpenGL ES 函数——注意这些是 C/C++ 引擎里**原封不动**的图形代码。
+            3. emscripten 的胶水层把每个 GL 调用**自动翻译**成等价的 WebGL 调用（如 `glClear` → `gl.clear`），并作用在第 1 步那个 canvas 的 WebGL 上下文上。
+            4. 于是引擎「以为」自己在跑原生 OpenGL，实际像素被画进了网页 canvas，浏览器负责把 canvas 显示出来。
+            5. 每一帧重复 2~4（通常由引擎的渲染循环 / `requestAnimationFrame` 驱动），就得到实时动画。
+        - 一句话：你不用改引擎的 GL 代码，emscripten 充当「OpenGL → WebGL 的翻译官」，canvas 就是最终的画布。
 - 你的 shader 特效场景大概率走第二条：emscripten 把引擎的 GL 上下文绑定到页面上的 canvas，引擎照常画，浏览器负责呈现。
 - 不论哪条路，DPR、坐标系、资源生命周期这些图形问题都还要处理。DPR 是 devicePixelRatio，设备像素比。
 
@@ -130,4 +162,40 @@ engine._free(ptr);
 - JavaScript 和 WASM 的边界调用是否足够少、传输是否足够批量。
 - 引擎的 GL 上下文和页面 canvas、DPR 是否对齐。
 - `.wasm` 的加载是否异步、是否处理了加载失败。
+    - 为什么要异步：`.wasm` 文件要走网络下载、再编译实例化，这是个耗时操作；同步加载会卡住主线程、页面假死。所以用 Promise/`async-await`，加载期间页面照常响应，失败了也能给用户提示。
+    - 推荐用 `WebAssembly.instantiateStreaming`：边下载边编译，最快；并用 `try/catch` 兜住失败。
+
+    ```js
+    async function loadWasm() {
+      try {
+        // fetch 拿到响应流，instantiateStreaming 边下边编译（无需等整个文件下载完）
+        // 这里的「编译」指什么？.wasm 文件里是「字节码」(一种跨平台的中间二进制，x86/ARM 通用)，
+        //   不是 CPU 能直接跑的机器码。浏览器引擎(V8 等)必须把字节码翻译成【当前 CPU 的本地机器码】，
+        //   这一步就是编译——所以 wasm 确实仍需编译，只是它的「源」是字节码而非文本源码，比编译 C++ 快得多。
+        // 为什么能「边下边编译」？原理有两点：
+        //   1. fetch 返回的是一个「流(stream)」：数据分成一小块一小块(chunk)陆续到达，不是一次性全到。
+        //      instantiateStreaming 直接吃这个流，每到一块就交给编译器，所以不用等整个文件下完。
+        //   2. wasm 字节码是「顺序可解析」的——模块按固定顺序排列(先头部、再函数声明、再函数体…)，
+        //      引擎从前往后读到哪就能把哪段编成机器码，不必看到结尾才动工。
+        // 二者结合：网络在下后半段的同时，CPU 已经在把前半段编成机器码，下载和编译时间重叠，首次可用更快。
+        const { instance } = await WebAssembly.instantiateStreaming(
+          fetch("engine.wasm"),
+          {} // importObject：wasm 需要的外部函数/内存，没有就传空对象
+        );
+        return instance.exports; // 这里就是 wasm 导出的函数，可直接调用
+      } catch (err) {
+        // 处理加载失败：网络断了、文件 404、或服务器没返回 application/wasm 类型等
+        console.error("WASM 加载失败：", err);
+        // 实际项目里可在这里降级到纯 JS 实现，或给用户一个错误提示
+        throw err;
+      }
+    }
+
+    // 用法：await 不会阻塞主线程，加载期间页面仍可交互
+    const engine = await loadWasm();
+    ```
+
+    > 小注：`instantiateStreaming` 要求服务器返回的 MIME 类型是 `application/wasm`，否则会报错；万一服务器配置不对，可退回 `WebAssembly.instantiate(await fetch(...).then(r => r.arrayBuffer()), ...)` 这种先下完再编译的写法。
+    >
+    > `arrayBuffer` 里存的是什么？就是 `.wasm` 文件**一个字节不改的原始二进制内容**——和你在磁盘上看到的那个文件完全一样的一串 0/1 字节。它不是文本、不能直接读懂，只是块「生数据」。后面 `WebAssembly.instantiate` 会把这串字节当成程序去**编译、装进内存**，变成可调用的函数。可以类比：`arrayBuffer` 像下载下来的安装包（一堆二进制），`instantiate` 像把它安装成能运行的程序。
 - 计算密集的部分是否真的放在了 WASM，胶水和 UI 是否还留在 JavaScript。

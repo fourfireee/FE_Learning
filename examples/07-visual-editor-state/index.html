@@ -20,10 +20,16 @@
       </section>
 
       <section id="editor" class="editor" aria-label="节点编辑器">
+        <!-- SVG 用于绘制连线 -->
         <svg id="edges" class="edges"></svg>
+        <!-- 节点容器。实际真实场景、应该用 react flow 之类的解决方案，而不是现在这样自己拼svg和nodes -->
         <div id="nodes" class="nodes"></div>
       </section>
 
+      <!-- readonly：只读，用户不能编辑里面的文字（这里只用来展示序列化结果，所以禁止手改）。
+           aria-label：给这个控件一个供屏幕阅读器朗读的名字。textarea 没有可见的 <label>，
+                       加上它，视障用户聚焦时才能听到「序列化结果」，是无障碍的常见做法。
+           a11y：accessibility(无障碍/可访问性)的缩写——首尾 a、y，中间省略 11 个字母，故记作 a11y。 -->
       <textarea id="output" readonly aria-label="序列化结果"></textarea>
     </main>
   </body>

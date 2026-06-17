@@ -102,7 +102,7 @@ async function runNode(node, token) {
     }
 
     await sleep(node.duration / steps);
-    setNodeState(node.id, { progress: step * 10 });
+    setNodeState(node.id, { progress: Math.round((step / steps) * 100) });
   }
 
   if (node.id === "upscale" && failUpscaleInput.checked) {
@@ -123,6 +123,12 @@ function markBlockedAsCancelled() {
 }
 
 async function runWorkflow() {
+  // 这两行不是重复，是「换令牌(token)」：
+  //   第 1 行：把【旧】token 标记为 cancelled。若上一次 workflow 还在跑(比如用户没等完就又点了运行)，
+  //            正在执行的 runNode 会通过 token.cancelled 察觉并自行停止，避免新旧两次运行同时改状态。
+  //   第 2 行：再换上一个全【新】的 token 给本次运行用。旧运行仍持有旧 token(已 cancelled)，
+  //            新运行持有新 token，两者互不影响——这样取消旧的不会误伤新的。
+  // 关键：第 2 行是【重新赋值一个新对象】，不是改同一个对象，所以旧运行手里的引用不受影响。
   runToken.cancelled = true;
   runToken = { cancelled: false };
   state = createInitialState();
@@ -157,6 +163,9 @@ async function runWorkflow() {
       log(`workflow 失败：${error.message}`);
     }
 
+    // 模拟真实调度器的「连带处理」：当 workflow 失败或被取消时，那些还没轮到、
+    // 永远等不到上游结果的下游节点(状态仍是 idle/pending)，统一标记为 cancelled，
+    // 而不是让它们一直挂在「等待中」。这样状态如实反映「它们不会再运行了」。
     markBlockedAsCancelled();
   }
 }

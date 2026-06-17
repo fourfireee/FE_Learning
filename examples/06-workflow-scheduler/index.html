@@ -24,6 +24,10 @@
 
       <section class="panel">
         <h2>运行日志</h2>
+        <!-- ol = ordered list，有序列表：浏览器会自动给每个 <li> 加上 1. 2. 3. 的序号。
+             这里用它装运行日志，天然带行号、体现先后顺序。
+             对比 ul = unordered list，无序列表，前面是圆点而非数字。
+             两者里的每一条都用 <li> (list item)。JS 会往这个 <ol> 里动态 append 一条条 <li> 日志。 -->
         <ol id="log"></ol>
       </section>
     </main>
