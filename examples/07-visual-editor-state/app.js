@@ -58,11 +58,11 @@ function renderEdges() {
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("class", "edge");
     // d 是 SVG path 的「路径指令」字符串，描述这条线怎么画。这里画一条三次贝塞尔曲线连接两个节点：
-  //   M x y            move to：把画笔移到起点(from)，不画线。
-  //   C c1x c1y, c2x c2y, x y   cubic贝塞尔：用两个控制点把画笔从起点弯到终点(to)。
-  // 控制点取在水平中点 midX 上(c1=(midX, from.y), c2=(midX, to.y))，
-  // 让曲线从起点先水平伸出、再平滑拐向终点，形成节点图里常见的「S 形」连线。
-  path.setAttribute("d", `M ${from.x} ${from.y} C ${midX} ${from.y}, ${midX} ${to.y}, ${to.x} ${to.y}`);
+    //   M x y            move to：把画笔移到起点(from)，不画线。
+    //   C c1x c1y, c2x c2y, x y   cubic贝塞尔：用两个控制点把画笔从起点弯到终点(to)。
+    // 控制点取在水平中点 midX 上(c1=(midX, from.y), c2=(midX, to.y))，
+    // 让曲线从起点先水平伸出、再平滑拐向终点，形成节点图里常见的「S 形」连线。
+    path.setAttribute("d", `M ${from.x} ${from.y} C ${midX} ${from.y}, ${midX} ${to.y}, ${to.x} ${to.y}`);
     return path;
   }));
 }

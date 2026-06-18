@@ -109,8 +109,7 @@ engine._free(ptr);
 
 ## 和 Canvas / WebGL 衔接
 
-## 渲染引擎接入有两条路
-
+- 算完的像素最终要显示出来，渲染引擎接入有两条路：
 - 引擎只算像素，结果回传 JavaScript，由 JavaScript 画到 2D Canvas（适合滤镜、后处理这类逐像素结果）。
 - 引擎直接驱动 WebGL，把一个 canvas 交给 WASM，引擎内部的 GL 调用经 emscripten 直接渲染到这个 canvas（适合完整的实时渲染管线）。
     - 这条路怎么跑通，分步看（核心：让引擎里原本的 OpenGL 代码「画到」网页的 canvas 上）：

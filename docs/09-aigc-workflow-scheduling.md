@@ -20,7 +20,8 @@ type WorkflowNode = {
   // (步数是数字、提示词是字符串…)，所以键值都开放。
   // 用 unknown 而非 any：unknown 取出后必须先判断/收窄类型才能用，更安全；any 则完全放弃检查。
   params: Record<string, unknown>;
-  status: "idle" | "pending" | "running" | "success" | "failed";
+  // 取值和下面「节点状态」一节一一对应；cancelled 表示被取消（见示例里的取消逻辑）。
+  status: "idle" | "pending" | "running" | "success" | "failed" | "cancelled";
 };
 
 type WorkflowEdge = {

@@ -28,7 +28,7 @@ flowchart LR
 
 - 类型选择器：`button`。
 - 类选择器：`.toolbar`。
-- 属性选择器：`input[type="range"]`。只选「type 是 range 的 input」，也就是页面上的滑块控件，而不会动到 type="text"、type="checkbox" 等其他 input
+- 属性选择器：`input[type="range"]`。只选「type 是 range 的 input」，也就是页面上的滑块控件，而不会动到 `type="text"`、`type="checkbox"` 等其他 input。
 - 状态选择器：`:hover`、`:focus`。
 
 ## 层叠和继承
@@ -120,4 +120,4 @@ flowchart LR
 ## 可运行示例
 
 - [CSS 布局与动画示例](../examples/02-css-layout-and-animation/index.html)
-- ↑、响应式排版布局（比如不同分辨率下的排版规则自动切换），可以用css配置出来；transform keyframe动画，也可以用css配置出来
+- 这个示例展示了两类纯 CSS 就能实现的能力：一是响应式布局（用媒体查询让排版规则随分辨率自动切换），二是 `transform` + `@keyframes` 关键帧动画，都不需要写 JavaScript。
