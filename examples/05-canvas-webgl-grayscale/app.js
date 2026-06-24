@@ -284,6 +284,30 @@ function drawWebGl() {
   message.textContent = `当前灰度强度：${strengthInput.value}%`;
 }
 
+// 读取并显示 WebGL 版本等信息。
+function showGlInfo() {
+  const glInfo = document.querySelector("#gl-info");
+  if (!gl) {
+    glInfo.textContent = "WebGL 信息：当前环境不支持 WebGL。";
+    return;
+  }
+
+  // gl.getParameter 用一个常量去查询 WebGL 的各种状态/信息，这里查的是版本相关字符串：
+  //   gl.VERSION                  —— 运行时版本，如 "WebGL 1.0 (OpenGL ES 2.0 Chromium)"。
+  //   gl.SHADING_LANGUAGE_VERSION —— 着色器语言(GLSL)版本。
+  const version = gl.getParameter(gl.VERSION);
+  const glsl = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
+
+  // 显卡型号默认被浏览器打码（隐私保护），需要 WEBGL_debug_renderer_info 扩展才能拿到真实型号。
+  // 扩展不一定存在，所以要判空兜底。
+  const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+  const renderer = debugInfo
+    ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+    : gl.getParameter(gl.RENDERER); // 没有扩展时退回到（通常被打码的）RENDERER
+
+  glInfo.textContent = `WebGL 版本：${version}｜GLSL：${glsl}｜渲染器：${renderer}`;
+}
+
 function redraw() {
   drawSourceImage();
   drawWebGl();
@@ -293,3 +317,4 @@ document.querySelector("#redraw").addEventListener("click", redraw);
 strengthInput.addEventListener("input", drawWebGl);
 
 redraw();
+showGlInfo();

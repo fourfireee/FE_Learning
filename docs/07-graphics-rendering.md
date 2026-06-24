@@ -57,6 +57,21 @@
 ## WebGL / WebGPU
 
 - WebGL 是 Web Graphics Library，浏览器里的 3D 图形接口。
+
+- WebGL 1.0 和 2.0 的区别（简要）：
+    - 血统：1.0 基于 OpenGL ES 2.0，2.0 基于 OpenGL ES 3.0；2.0 是超集，1.0 能做的它都能做。
+        - ES = Embedded Systems（嵌入式系统）。OpenGL ES 是 OpenGL 的精简版，最初为手机、嵌入式等资源受限设备设计；WebGL 就建立在它之上。
+        - OpenGL ES 版本和 GLSL ES 版本是绑定的：每个 OpenGL ES 版本配套规定了它使用的 GLSL ES 版本，不能自由组合。对应关系：OpenGL ES 2.0 → GLSL ES 1.00，OpenGL ES 3.0 → GLSL ES 3.00（注意没有所谓 2.00，版本号是跳着对应的）。
+    - 着色器语言：1.0 用 GLSL ES 1.00，2.0 用 GLSL ES 3.00（语法更新、功能更强，写法略有不同）。
+    - 多了哪些常用能力：2.0 原生支持多渲染目标(MRT)、3D 纹理、整数纹理、Uniform Buffer Object、变换反馈、实例化绘制、非 2 次幂纹理等；这些在 1.0 里要么没有、要么得靠扩展且不保证可用。
+        - 变换反馈（Transform Feedback）：让 vertex shader 计算出的结果不去绘制，而是「写回」到一个 buffer 里留着下次用。
+            - 平时管线是「顶点数据 → shader 处理 → 画到屏幕」，结果用完即弃；变换反馈相当于在中途接根管子，把 shader 算出的顶点数据截留下来。
+            - 用途：在 GPU 上做可迭代的计算，典型是粒子系统——这一帧用 shader 算出每个粒子的新位置/速度写回 buffer，下一帧拿它当输入接着算，全程不经过 CPU，非常快。
+            - 一句话：它把 GPU 当成「能把计算结果存下来反复迭代」的计算器，而不只是「画一次就丢」的绘图器。
+    - 兼容性：1.0 支持最广（几乎所有设备），2.0 现代浏览器普遍支持，但极老设备可能没有。
+    - 怎么选用：`canvas.getContext("webgl2")` 拿 2.0，`getContext("webgl")` 拿 1.0；常见写法是先试 webgl2、拿不到再退回 webgl。
+    - 对本教程示例：05 示例用的是 `getContext("webgl")`（1.0），因为灰度滤镜很简单，1.0 足够且兼容性最好。
+
 - WebGPU 是浏览器里更现代的 GPU 接口，能力更接近底层图形 API。
 - 适合 shader、纹理、GPU 加速图形计算。
 - 适合滤镜、后处理、粒子、大量并行计算。

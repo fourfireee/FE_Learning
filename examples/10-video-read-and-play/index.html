@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>读取并播放视频示例</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <h1>读取并播放视频示例</h1>
+
+      <section class="controls">
+        <!-- accept="video/*"：文件选择框只筛选视频类型，方便用户挑选。 -->
+        <label>
+          选择本地视频
+          <input id="file" type="file" accept="video/*">
+        </label>
+        <!-- 抓取当前帧画到右边的 canvas，演示视频和图形渲染的衔接。 -->
+        <!-- disabled：HTML 布尔属性，写上就表示按钮「禁用」——变灰、不可点、点了也不触发事件。
+             这里初始就禁用，是因为还没选视频、没有画面可抓；等视频元数据加载完（loadedmetadata），
+             app.js 里会把 grabButton.disabled = false 解除禁用。这是常见的「条件就绪前先禁用」做法。 -->
+        <button id="grab" disabled>抓取当前帧到 Canvas</button>
+      </section>
+
+      <section class="controls">
+        <!-- 跳转到指定帧：因为视频只能按「时间」定位，需要帧率(fps)来把帧号换算成秒。
+             fps 浏览器拿不到，这里让用户手动填（常见是 24 / 25 / 30 / 60）。 -->
+        <label>
+          帧率 fps
+          <input id="fps" type="number" min="1" value="30">
+        </label>
+        <label>
+          帧号
+          <input id="frame-no" type="number" min="0" value="0">
+        </label>
+        <button id="seek" disabled>跳转到该帧并抓取</button>
+      </section>
+
+      <section class="stage">
+        <div>
+          <h2>视频播放</h2>
+          <!-- controls：显示浏览器自带的播放/暂停/进度条等控件。
+               playsinline：移动端不强制全屏，内联播放。
+               video 元素本身就能解码并播放，不需要自己写解码逻辑。 -->
+          <video id="video" controls playsinline></video>
+        </div>
+        <div>
+          <h2>抓取的帧（Canvas）</h2>
+          <canvas id="frame"></canvas>
+        </div>
+      </section>
+
+      <p id="message" class="message">先选择一个本地视频文件。</p>
+    </main>
+  </body>
+</html>
