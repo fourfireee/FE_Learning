@@ -15,17 +15,11 @@ function setup2dCanvas(canvas, context, width, height) {
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
-  // setTransform(a, b, c, d, e, f) 直接「重置」画布的坐标变换矩阵，6 个参数含义：
-  //   a=水平缩放, d=垂直缩放, b/c=倾斜(skew), e/f=平移(单位:像素)。
-  //   它把你写的坐标 (x, y) 换算成实际绘制位置：新x = a*x + c*y + e；新y = b*x + d*y + f。
-  // 举例帮助理解：
-  //   setTransform(1,0,0,1, 50,30)  → 画什么都整体右移 50、下移 30（e=平移x, f=平移y）。
-  //   setTransform(1,0.5,0,1, 0,0)  → b=0.5：x 越大，y 被额外拉低，图形变成向下斜的平行四边形（倾斜）。
-  //   setTransform(2,0,0,2, 0,0)    → a=d=2：整体放大 2 倍。
-  // 本行用 (dpr,0,0,dpr,0,0)：不平移不倾斜，只把坐标放大 dpr 倍。
-  // 作用：上面把画布物理像素放大了 dpr 倍（为了高分屏清晰），这里让绘图坐标也放大 dpr 倍，
-  // 于是后面写 (10, 20) 这种 CSS 坐标会自动落到正确的物理像素上——不必每个坐标手动乘 dpr。
-  // 用 setTransform 而非 scale：它是「设为」而不是「叠加」，重复调用也不会越缩越多。
+  // setTransform(a, b, c, d, e, f) ↓
+  //   a c e      x  
+  // [ b d f ]  [ y ] 
+  //   0 0 1      1
+  // 新x = a*x + c*y + e；新y = b*x + d*y + f
   context.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
@@ -58,6 +52,10 @@ function drawSourceImage() {
   sourceContext.fillRect(205, 82, 130, 96);
 
   sourceContext.fillStyle = "#ffffff";
+  // canvas 的 font 用的是 CSS font 简写语法，顺序是：font-weight font-size font-family
+  //   700      字重（粗细），700 等于 bold；正常是 400。
+  //   28px     字号，28 像素高。
+  //   system-ui 字体族，表示“用操作系统的默认 UI 字体”（Mac 上是苹方/SF，Windows 上是雅黑等）。
   sourceContext.font = "700 28px system-ui";
   sourceContext.fillText("shader", 220, 140);
 }
@@ -75,6 +73,15 @@ function compileShader(type, source) {
 }
 
 function createProgram() {
+  // 着色器源码本质只是字符串，compileShader 不关心它来自哪，理论上可抽成独立的
+  // .vert / .glsl 文件。这里却内联在 JS 里，是为了「零依赖、双击即跑」：
+  //   独立文件通常要用 fetch 加载，而 fetch 是异步的，且本地直接以 file:// 打开 index.html 时
+  //   会被浏览器同源策略拦截、读不到本地文件，必须额外起一个本地 http 服务（或上打包工具）。
+  //   「上打包工具」的原理：Vite / webpack 这类工具在【构建阶段】（代码还没进浏览器、跑在 Node 里时）
+  //   就把 .vert 文件的内容读出来、直接拼成一个字符串变量塞进最终的 JS 产物（如 import src from './x.vert?raw'）。
+  //   于是运行时浏览器拿到的依然是内联字符串，既无异步 fetch、也不受 file:// 限制——
+  //   相当于把「读文件」这步从运行时提前到了构建时。代价是要引入并配置构建工具。
+  //   对这个教学小 demo 来说，内联字符串反而最省事，所以刻意写在这里。
   const vertexShader = compileShader(gl.VERTEX_SHADER, `
     attribute vec2 a_position;
     attribute vec2 a_texCoord;
@@ -118,6 +125,8 @@ function createProgram() {
     position: gl.getAttribLocation(program, "a_position"),
     texCoord: gl.getAttribLocation(program, "a_texCoord"),
     strength: gl.getUniformLocation(program, "u_strength"),
+    // 拿到 sampler uniform u_image 的位置，后面显式告诉它「用哪个纹理单元」。
+    image: gl.getUniformLocation(program, "u_image"),
   };
 }
 
@@ -136,6 +145,13 @@ function createBuffer(data, location, size) {
   //   offset=0  —— 从缓冲区开头读起。
   // 简单说：这行把上面那块裸数据「解释」成 GPU 能逐顶点读取的属性。
   gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+
+  // 防御性解绑：把 ARRAY_BUFFER 的当前绑定清空。
+  // 原理：vertexAttribPointer 在上一行已经把「当前绑定的 buffer」记进了这个 attribute 自己的状态里，
+  //   绘制时 GPU 按各 attribute 记住的 buffer 取数据，不再看 ARRAY_BUFFER 现在绑的是谁。
+  //   所以这里解绑不会影响绘制；它的作用是防止后续某处误调 gl.bufferData(ARRAY_BUFFER, ...) 时，
+  //   意外改写到这个还残留绑定的 buffer。解绑后再误操作只会作用到 null（报错/无效），更易暴露问题。
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }
 
 // 顶点数据是怎么「进」shader 的？WebGL 没有「传参」，靠下面这条数据流（绑定 + 关联 + 绘制）：
@@ -166,22 +182,22 @@ function setupGeometry() {
 
   // 顶点位置：裁剪空间坐标，范围 [-1,1]，(-1,-1) 左下、(1,1) 右上，正好覆盖整个画布。
   createBuffer([
-    -1, -1,
-    1, -1,
-    -1, 1,
-    -1, 1,
-    1, -1,
-    1, 1,
+    -1, -1, // 左下
+    1, -1, // 右下
+    -1, 1, // 左上
+    -1, 1, // 左上
+    1, -1, // 右下
+    1, 1, // 右上
   ], programInfo.position, 2);
 
   // 纹理坐标(UV)：范围 [0,1]，(0,0) 对应图片一角、(1,1) 对应对角，逐顶点和上面的位置一一对应。
   createBuffer([
-    0, 0,
-    1, 0,
-    0, 1,
-    0, 1,
-    1, 0,
-    1, 1,
+    0, 0, // 左下
+    1, 0, // 右下
+    0, 1, // 左上
+    0, 1, // 左上
+    1, 0, // 右下
+    1, 1, // 右上
   ], programInfo.texCoord, 2);
 
   geometryReady = true;
@@ -192,6 +208,13 @@ function uploadTexture() {
     texture = gl.createTexture();
   }
 
+  // 显式激活 0 号纹理单元（TEXTURE0），随后的 bindTexture 就会把纹理绑到这个单元上。
+  // 不再依赖「activeTexture 默认是 TEXTURE0」这个隐式默认值。
+  gl.activeTexture(gl.TEXTURE0);
+  // 底层做的事：把 texture 这个纹理对象「挂」到当前激活的纹理单元（上一行的 TEXTURE0）的
+  // TEXTURE_2D 槽位上。之后所有针对 gl.TEXTURE_2D 的操作（texImage2D 上传、texParameteri 设参数、
+  // shader 采样）都作用到这张被绑定的纹理。它只是改 WebGL 状态机里「当前纹理是谁」的指针，
+  // 不复制像素数据；真正的数据上传是下面的 texImage2D。
   gl.bindTexture(gl.TEXTURE_2D, texture);
   // 上传纹理时把图像在竖直方向翻转一下。原因：图片/canvas 的坐标原点在【左上角】、y 向下，
   // 而 WebGL 纹理坐标(UV)原点在【左下角】、y 向上，两者上下相反。
@@ -199,6 +222,15 @@ function uploadTexture() {
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
   // 这里把 2D canvas 当成纹理上传给 GPU，fragment shader 后面会逐像素采样它。
+  // texImage2D(target, level, internalFormat, format, type, source)：
+  //   gl.TEXTURE_2D    —— 目标是 2D 纹理；
+  //   0                —— level，即 mipmap 层级。0 表示「最高分辨率的原图（基础层）」；
+  //                       1、2… 是逐级缩小的预生成小图（mipmap），用于远处/缩小时采样更快更平滑。
+  //                       这里只上传一层原图，所以是 0；不手动建其它层。
+  //   gl.RGBA(第3个)   —— internalFormat，GPU 内部怎么存（红绿蓝 + 透明，各 8 位）；
+  //   gl.RGBA(第4个)   —— format，源数据的像素格式（要和上面匹配）；
+  //   gl.UNSIGNED_BYTE —— 每个通道是 0~255 的无符号字节；
+  //   sourceCanvas     —— 数据来源（这里直接用 2D canvas）。
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -207,6 +239,16 @@ function uploadTexture() {
 }
 
 function drawWebGl() {
+  // gl 来自前面的 glCanvas.getContext("webgl")，拿不到时为 null，这里要兜底。
+  // 什么情况下会拿不到（!gl 为真）：
+  //   1. 太老的浏览器（如老 IE）本就不支持 WebGL；
+  //   2. 浏览器支持，但 GPU 驱动有问题/被列入黑名单，或用户在设置里禁用了硬件加速/WebGL；
+  //      （即：你的显卡驱动太旧或有已知崩溃 bug，浏览器为防止崩溃/花屏，主动把这类驱动拉黑、不让它跑 WebGL。）
+  //   3. 同一个 canvas 已经先 getContext("2d") 拿过 2D 上下文了——一个 canvas 的上下文类型是“一次性绑定、互斥”的，之后再要 webgl 会返回 null；
+  //   4. 资源紧张：页面同时存在的 WebGL 上下文过多（浏览器有数量上限），新建会失败。
+  // 另外要澄清：canvas 不会“自带” gl 上下文。canvas 默认只是一块空白画布，
+  // 必须显式调用 getContext("webgl") 才会创建并返回上下文；不调用就没有。
+  // 每个 canvas 各自 getContext("webgl") 拿到的是相互独立的 gl context
   if (!gl) {
     message.textContent = "当前浏览器不支持 WebGL。";
     return;
@@ -226,10 +268,18 @@ function drawWebGl() {
 
   uploadTexture();
 
+  // 显式把 sampler u_image 指到 0 号纹理单元（必须在 useProgram 之后设置 uniform）。
+  // 这样「u_image → TEXTURE0 → uploadTexture 里绑到 TEXTURE0 的那张纹理」整条链路就打通了。
+  gl.uniform1i(programInfo.image, 0);
+
   const strength = Number(strengthInput.value) / 100;
   gl.uniform1f(programInfo.strength, strength);
 
   // 画两个三角形，刚好覆盖整个画布。
+  // drawArrays(模式, first, count)：
+  //   gl.TRIANGLES 模式 = 每 3 个顶点组成一个三角形；
+  //   0 = first，从顶点缓冲里第 0 个顶点开始读；
+  //   6 = count，一共读 6 个顶点 → 6 / 3 = 2 个三角形（两个三角形拼成一个矩形，盖满画布）。
   gl.drawArrays(gl.TRIANGLES, 0, 6);
   message.textContent = `当前灰度强度：${strengthInput.value}%`;
 }
