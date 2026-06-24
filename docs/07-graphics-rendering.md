@@ -124,6 +124,82 @@ flowchart LR
 - 大图、视频帧、纹理上传是否避免不必要重复。
 - 渲染循环是否只在必要时运行。
 
+## native渲染引擎使用web gl_context
+
+```js 
+const glCanvas = document.querySelector("#gl-canvas"); //拿一个canvas
+const gl = glCanvas.getContext("webgl"); // 创建gl context
+```
+
+- 场景：有一个 C++ native 渲染引擎，它自己不创建 GL context、只「使用」外部给的 context。想把它编译成 WASM 跑在上面这个 canvas 上。
+
+- 先纠正一个直觉误区：不能把上面 `getContext("webgl")` 拿到的 `gl` 对象，当指针「传」给 C++ 引擎。
+    - 原因：WASM 运行在沙箱里，C++ 侧拿不到 JS 对象的引用。
+    - 真正的桥是 Emscripten 的 GL 层：它内部维护一个「当前 WebGL context」，引擎里的 `glDrawArrays`、`glBindTexture` 等调用，会被自动翻译成对这个 context 的 WebGL 调用。
+    - 所以你要做的不是「传对象」，而是「让某个 context 成为当前(make current)」——这恰好对应你引擎「只使用、不创建 context」的设定：创建交给宿主，引擎只管用。
+
+- 步骤一：编译。用 emscripten（emcc）把引擎编译成 `.wasm` + 胶水 `.js`，链接 GL 并导出入口函数。
+
+```bash
+# emcc：emscripten 的编译器（相当于 C/C++ 界的 gcc/clang，但目标是 wasm）。
+# engine.cpp：你的引擎源码；-o engine.js：输出胶水 JS（会同时生成同名的 engine.wasm）。
+emcc engine.cpp -o engine.js \
+  -sUSE_WEBGL2=1 \
+  `# 让 GL 调用走 WebGL 2.0（基于 OpenGL ES 3.0）；想要 WebGL 1.0 就去掉它。` \
+  -sFULL_ES3=1 \
+  `# 完整模拟 OpenGL ES 3.0 API：引擎里那些 glXxx 调用才有对应实现可链接（WebGL 1.0 对应 -sFULL_ES2）。` \
+  -sEXPORTED_FUNCTIONS=_init,_render
+  # 导出哪些 C 函数给 JS 调用。名字要加下划线前缀（C 的 init→_init）；
+  # 导出后 JS 里用 Module._init() / Module._render() 调用，不导出的会被优化掉、JS 调不到。
+```
+
+- 步骤二：创建 context，并设为当前。「创建」由宿主负责，引擎拿来即用。两种常见接法：
+- A. 让 Emscripten 自己为 canvas 建 context（C 侧）：
+
+```c
+EmscriptenWebGLContextAttributes attrs;
+emscripten_webgl_init_context_attributes(&attrs);
+EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx =
+    emscripten_webgl_create_context("#gl-canvas", &attrs);
+emscripten_webgl_make_context_current(ctx); // 设为当前，之后引擎的 gl* 调用都作用到它
+```
+
+- 关于 `"#gl-canvas"`：它是 CSS 选择器，指向页面里 `id="gl-canvas"` 的 canvas，所以 HTML 要先备好这个元素：`<canvas id="gl-canvas"></canvas>`。
+    - 名字随意，但 HTML 的 `id` 和这里字符串必须一致；`#` 是「按 id 找」的选择器语法，不是名字的一部分（HTML 里写 `id="gl-canvas"` 不带 `#`）。
+    - canvas 必须在调用前就存在于 DOM 里，否则找不到、创建失败。
+    - 版本差异：较新的 Emscripten 可能不再支持「按选择器全局找元素」，需改用 `Module.canvas` 指定目标或加相应编译选项；按上面写法报「找不到 canvas」时多半是这个原因。
+        - 怎么理解：老版本里你给个字符串 `"#gl-canvas"`，Emscripten 会自己去整个页面里搜这个元素；新版本默认关掉了这种「自动全局搜」，于是按字符串找不到。
+        - 改用 `Module.canvas`：不让它去搜，而是你直接把 canvas 这个对象「递」给它。即加载 WASM 前先 `Module.canvas = document.querySelector("#gl-canvas")`，Emscripten 就用你指定的这个，不再靠选择器。
+        - 「加相应编译选项」：就是在 emcc 编译命令里多加一个开关，把上面那种「按选择器找元素」的能力重新打开（不同 Emscripten 版本开关名不同，用你所在版本的文档确认即可）。
+        - 一句话：两条路二选一——要么把 canvas 对象直接交给它（`Module.canvas`），要么用编译选项把「按名字找」的老行为打开。
+
+- B. 复用 JS 侧已建好的 context：在加载 WASM 前，把它挂到 Module 上交给 Emscripten 接管。
+
+```js
+const gl = glCanvas.getContext("webgl2");
+// 让 Emscripten 直接用这个已存在的 context，而不是自己再建一个
+Module.preinitializedWebGLContext = gl;
+// 关键：不要 JS 和 Emscripten 各建一个 context；要么用 A，要么用 B。
+```
+
+- 怎么理解 `Module.preinitializedWebGLContext`：
+    - `Module` 是 Emscripten 的「配置 + 运行时」总对象，胶水 JS 启动时会读它身上的字段来决定怎么初始化。它就是 JS 和 WASM 之间传东西的公共桌面。
+    - 这个字段的意思是「预先建好的 WebGL context」。你提前 `getContext` 建好 context、挂到这里，相当于告诉 Emscripten：「context 我准备好了，你别自己建，直接用这个。」
+    - 它如何作用到 WASM：Emscripten 初始化 GL 时，发现这个字段有值，就把它登记成自己的「当前 context」。之后 WASM 里引擎的 `glDrawArrays` 等调用，经胶水层转成 WebGL 调用时，用的就是你给的这个 context——于是画到你这块 canvas 上。
+    - 必须「在加载 / 实例化 WASM 之前」就设好，因为 Emscripten 只在初始化那一刻读它；晚了就来不及，它会走默认流程自己建。
+    - 一句话：A 是「让 Emscripten 自己建 context」，B(本段)是「你建好后塞给它复用」，本质都是让引擎拿到同一个当前 context。
+
+- 步骤三：驱动引擎渲染。通过导出的函数调用引擎，它的 `gl*` 调用会画到 canvas 的默认 framebuffer，Emscripten 自动呈现到画布。
+
+```js
+Module._init();
+function frame() {
+  Module._render();          // 引擎内部执行一帧的 gl* 调用
+  requestAnimationFrame(frame); // 每帧循环；多 context 时每帧先 make current 再画
+}
+requestAnimationFrame(frame);
+```
+
 ## 可运行示例
 
 - [Canvas / WebGL 灰度滤镜示例](../examples/05-canvas-webgl-grayscale/index.html)
