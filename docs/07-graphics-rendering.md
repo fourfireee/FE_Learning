@@ -23,6 +23,22 @@
     - 所以可以记成：**画内容 = CPU，搬运/合成图层 = GPU**。这也解释了为什么「大量节点频繁变化」会卡——每次变化都要 CPU 重新光栅化；而只做平移/缩放/淡入淡出时，能只走 GPU 合成，就很流畅。
     - 注：业界有「GPU 直接渲染矢量路径（tessellation 生成 mesh）」的方案，但目前不是主流浏览器渲染普通 SVG 的默认路径。
 
+## SMIL
+
+- SMIL 全称 Synchronized Multimedia Integration Language（同步多媒体集成语言），是 W3C 的一个 XML 标准，用来描述“随时间播放的动画/多媒体”
+- 简单示例：在 SVG 里给圆加一个 `<animate>` 子标签，不写一行 JS、不写一行 CSS，圆就会自己动起来——“动画描述”直接写在标签属性里，这就是 SMIL：
+
+```html
+<svg width="220" height="100">
+  <circle cx="30" cy="50" r="20" fill="tomato">
+    <!-- 让圆心的 x 坐标（cx）在 2 秒内从 30 变到 190，无限循环 -->
+    <animate attributeName="cx" from="30" to="190" dur="2s" repeatCount="indefinite" />
+  </circle>
+</svg>
+```
+
+- 把这段直接存成 .html 用浏览器打开，就能看到小球不断从左滑到右、再跳回左边重来。声明式（“从哪到哪、多长时间”写在标签里，浏览器自己驱动每一帧）正是 SMIL 和 JS 逐帧改属性的本质区别
+
 ## Canvas
 
 - 适合大量 2D 绘制、像素处理、游戏式刷新。
