@@ -5,6 +5,47 @@
 - fetch 是浏览器提供的发 HTTP 请求的内置函数，常用来调用后端接口。
 - 你的 AIGC 调度工具几乎全是异步：发请求、等结果、轮询、超时、重试、限流，全靠这套东西组织。
 
+## fetch简介
+
+- Web Fetch 通常指浏览器内置的 `fetch()` API（Application Programming Interface，程序调用接口）。
+
+- 它让网页通过 HTTP/HTTPS 与服务器通信，可以：
+  - 获取 JSON 数据。
+  - 下载图片或文件。
+  - 提交表单。
+  - 调用后端 API。
+  - 上传数据。
+
+- 可以简单理解为：“网页自带的网络请求工具”，类似 iOS 的 `URLSession` 和 Android 常用的 `OkHttp`。
+
+```ts
+const response = await fetch('/api/effects/A1EP123');
+
+if (!response.ok) {
+  throw new Error(`Request failed: ${response.status}`);
+}
+
+const effect = await response.json();
+console.log(effect);
+```
+
+- 下载 effect bundle 时可以这样使用：
+
+```ts
+const response = await fetch(effect.archiveUrl);
+const bundle = await response.blob();
+```
+
+- `fetch()` 只负责网络传输，不会自动处理：
+  - 业务身份验证。
+  - 文件缓存策略。
+  - 下载进度。
+  - 自动重试。
+  - ZIP 解压。
+  - effect bundle 版本检查。
+
+- `fetch()` 是 Web 标准，由主流浏览器实现，不是 Canva 自研工具。Canva 可以在它上面封装统一的 Network library，加入鉴权、监控、重试和错误处理。
+
 ## 为什么需要异步
 
 - 网络请求、定时器、读文件这类操作很慢。
